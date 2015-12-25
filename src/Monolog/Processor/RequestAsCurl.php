@@ -20,6 +20,9 @@ class RequestAsCurl
 
     function __construct(RequestStack $requestStack){
         $this->request = $requestStack->getCurrentRequest();
+        if($this->request === null){
+            $this->request = Request::createFromGlobals();
+        }
         $this->serverBag = new ServerBag($_SERVER);
     }
 
