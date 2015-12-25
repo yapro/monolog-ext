@@ -4,7 +4,7 @@
   "version":     "0.0.7",
   "type":        "library",
   "keywords":    ["php", "error", "debug", "library", "monolog", "cascade", "monolog extension", "monolog plugin", "monolog utils", "logger", "log"],
-  "homepage":    "http://github.com/yapro/debug",
+  "homepage":    "https://github.com/yapro/debug",
   "license":     "MIT",
 
   "authors": [
@@ -16,8 +16,11 @@
   ],
 
   "require": {
-    "php" : ">=5.3.9",
-    "theorchard/monolog-cascade" : "^0.2.0"
+    "doctrine/common": ">=2.0"
+  },
+
+  "require-dev": {
+    "guzzlehttp/guzzle": "5.*"
   },
 
   "autoload": {
