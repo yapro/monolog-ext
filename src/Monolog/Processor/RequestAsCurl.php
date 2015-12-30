@@ -11,7 +11,7 @@ class RequestAsCurl
     /**
      * @var Request;
      */
-    private $request;
+    private $requestStack;
 
     /**
      * @var ServerBag
@@ -19,7 +19,7 @@ class RequestAsCurl
     private $serverBag;
 
     function __construct(RequestStack $requestStack){
-        $this->request = $requestStack->getCurrentRequest();
+        $this->requestStack = $requestStack;
         $this->serverBag = new ServerBag($_SERVER);
     }
 
@@ -29,11 +29,12 @@ class RequestAsCurl
      */
     public function __invoke(array $record)
     {
+        $request = $this->requestStack->getCurrentRequest();;
         $parts = [
             'command' => 'curl',
             'headers' => implode(' ', $this->getHeaders()),
-            'data' => '--data \'' . $this->request->getContent().'\'',
-            'url' => $this->request->getSchemeAndHttpHost() . $this->request->getPathInfo(),
+            'data' => '--data \'' . $request->getContent().'\'',
+            'url' => $request->getSchemeAndHttpHost() . $request->getPathInfo(),
         ];
         $record['requestAsCurl'] = implode(' ', $parts);
         return $record;

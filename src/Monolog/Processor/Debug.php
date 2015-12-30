@@ -13,25 +13,49 @@ class Debug
      */
     public function __invoke(array $record)
     {
-        if ($record['message'] instanceof \Exception) {
+        $e = null;
+        if(!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception){
+            $e = $record['context']['exception'];
+            unset($record['context']['exception']);
+        }elseif($record['message'] instanceof \Exception){
             $e = $record['message'];
-            $record['message'] = $e->getMessage();
-            $record['code'] = $e->getCode();
-            $record['class'] = get_class($e);
-        } else {
-            $e = new ExtraException();
+        }else{
+            $e = null;
         }
 
-        if ($e instanceof ExtraException) {
-            // set real values of fields File and Line (if they will found)
-            $placeTheCall = self::getInfoTheCall($e);
-            $record['trace'] = self::getRealTraceString($e, $placeTheCall);
-            if ($e->getExtra()) {
-                $record['extra'] = $e->getExtra();
+        if ($e instanceof \Exception) {
+            $record['message'] = $e->getMessage();
+            $record['code'] = $e->getCode();
+            $record['exceptionClass'] = get_class($e);
+            $record['trace'] = $e->getTraceAsString();
+            if(!array_key_exists('context', $record)){
+                $record['context'] = null;
+            }
+            // Exception of lambda function not have this methods
+            if ($e->getFile()) {
+                $record['context']['file'] = $e->getFile();
+            }
+            if ($e->getLine()) {
+                $record['context']['line'] = $e->getLine();
             }
         } else {
-            $record['trace'] = $e->getTraceAsString();
+            if(// \Symfony\Component\Debug\ErrorHandler::handleException
+                !empty($record['context']['stack']) &&
+                is_array($record['context']['stack'])
+            ){
+                $record['trace'] = self::getStackTraceForPhpStorm($record['context']['stack']);
+                unset($record['context']['stack']);
+            }else{
+                $e = new ExtraException();
+                // set real values of fields File and Line (if they will found)
+                $placeTheCall = self::getInfoTheCall($e);
+                $record['trace'] = self::getRealTraceString($e, $placeTheCall);
+                if ($e->getExtra()) {
+                    $record['extra'] = $e->getExtra();
+                }
+            }
         }
+
         return $record;
     }
 
@@ -82,5 +106,62 @@ class Debug
             $realTrace = strstr($realTrace, PHP_EOL);
         }
         return trim($realTrace);
+    }
+
+    /**
+     * @param array $trace
+     * @return string
+     */
+    public static function getStackTraceForPhpStorm(array $trace)
+    {
+        $rtn = "";
+        $count = count($trace);
+        foreach ($trace as $frame) {
+            $count--;
+            $args = "";
+            if (isset($frame['args'])) {
+                $args = array();
+                foreach ($frame['args'] as $arg) {
+                    if (is_string($arg)) {
+                        $args[] = "'" . $arg . "'";
+                    } elseif (is_array($arg)) {
+                        $args[] = "Array";
+                    } elseif (is_null($arg)) {
+                        $args[] = 'NULL';
+                    } elseif (is_bool($arg)) {
+                        $args[] = ($arg) ? "true" : "false";
+                    } elseif (is_object($arg)) {
+                        $args[] = get_class($arg);
+                    } elseif (is_resource($arg)) {
+                        $args[] = get_resource_type($arg);
+                    } else {
+                        $args[] = $arg;
+                    }
+                }
+                $args = join(", ", $args);
+            }
+            $file = '[internal function]';
+            $line = '';
+            if(array_key_exists('file', $frame)){
+                $file = $frame['file'];
+                $line = $frame['line'];
+            }
+            $class = array_key_exists('class', $frame) ? $frame['class'] : '';
+            $type = array_key_exists('type', $frame) ? $frame['type'] : '';
+            $function = array_key_exists('function', $frame) ? $frame['function'] : '';
+            if(substr($function, 0, 16) === 'call_user_func:{'){
+                $function = substr($function, 0, 14);
+            }
+            $rtn .= sprintf("#%s %s(%s): %s%s%s(%s)\n",
+                $count,
+                $file,
+                $line,
+                $class,
+                $type,
+                $function,
+                $args
+            );
+        }
+        return $rtn;
     }
 }
