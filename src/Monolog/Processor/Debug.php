@@ -13,6 +13,9 @@ class Debug
      */
     public function __invoke(array $record)
     {
+        if(!array_key_exists('extra', $record)){
+            $record['extra'] = null;
+        }
         $e = null;
         if(!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception){
             $e = $record['context']['exception'];
@@ -25,9 +28,9 @@ class Debug
 
         if ($e instanceof \Exception) {
             $record['message'] = $e->getMessage();
-            $record['code'] = $e->getCode();
-            $record['exceptionClass'] = get_class($e);
-            $record['trace'] = $e->getTraceAsString();
+            $record['extra']['code'] = $e->getCode();
+            $record['extra']['exceptionClass'] = get_class($e);
+            $record['extra']['trace'] = $e->getTraceAsString();
             if(!array_key_exists('context', $record)){
                 $record['context'] = null;
             }
@@ -43,13 +46,16 @@ class Debug
                 !empty($record['context']['stack']) &&
                 is_array($record['context']['stack'])
             ){
-                $record['trace'] = self::getStackTraceForPhpStorm($record['context']['stack']);
+                // @todo delete it when in symfony will be implemented:
+                // https://github.com/symfony/symfony/pull/17168
+                // https://github.com/symfony/monolog-bundle/pull/153
+                $record['extra']['trace'] = self::getStackTraceForPhpStorm($record['context']['stack']);
                 unset($record['context']['stack']);
             }else{
                 $e = new ExtraException();
                 // set real values of fields File and Line (if they will found)
                 $placeTheCall = self::getInfoTheCall($e);
-                $record['trace'] = self::getRealTraceString($e, $placeTheCall);
+                $record['extra']['trace'] = self::getRealTraceString($e, $placeTheCall);
                 if ($e->getExtra()) {
                     $record['extra'] = $e->getExtra();
                 }

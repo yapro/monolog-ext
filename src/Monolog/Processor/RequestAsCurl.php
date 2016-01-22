@@ -29,14 +29,20 @@ class RequestAsCurl
      */
     public function __invoke(array $record)
     {
-        $request = $this->requestStack->getCurrentRequest();;
+        $request = $this->requestStack->getCurrentRequest();
+        if($request === null){
+            $request = Request::createFromGlobals();
+        }
         $parts = [
             'command' => 'curl',
             'headers' => implode(' ', $this->getHeaders()),
             'data' => '--data \'' . $request->getContent().'\'',
             'url' => $request->getSchemeAndHttpHost() . $request->getPathInfo(),
         ];
-        $record['requestAsCurl'] = implode(' ', $parts);
+        if(!array_key_exists('extra', $record)){
+            $record['extra'] = [];
+        }
+        $record['extra']['requestAsCurl'] = implode(' ', $parts);
         return $record;
     }
 
