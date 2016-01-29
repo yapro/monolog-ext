@@ -18,7 +18,8 @@ class RequestAsCurl
      */
     private $serverBag;
 
-    function __construct(RequestStack $requestStack){
+    function __construct(RequestStack $requestStack)
+    {
         $this->requestStack = $requestStack;
         $this->serverBag = new ServerBag($_SERVER);
     }
@@ -30,16 +31,18 @@ class RequestAsCurl
     public function __invoke(array $record)
     {
         $request = $this->requestStack->getCurrentRequest();
-        if($request === null){
+        if ($request === null) {
             $request = Request::createFromGlobals();
         }
         $parts = [
             'command' => 'curl',
             'headers' => implode(' ', $this->getHeaders()),
-            'data' => '--data \'' . $request->getContent().'\'',
             'url' => $request->getSchemeAndHttpHost() . $request->getPathInfo(),
         ];
-        if(!array_key_exists('extra', $record)){
+        if ($request->getMethod() !== 'GET') {
+            $parts['data'] = '--data \'' . $request->getContent() . '\'';
+        }
+        if (!array_key_exists('extra', $record)) {
             $record['extra'] = [];
         }
         $record['extra']['requestAsCurl'] = implode(' ', $parts);

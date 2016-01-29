@@ -14,17 +14,57 @@ Add Debug as a requirement in your `composer.json` file or run
 $ composer require datravel/php-debug
 ```
 
-Usage
------
-Then just use your logger as shown below
+For Symfony 2.x
+------------
+
+Add needed for you services to file app/config/config.yml
+```
+    monolog.processor.web:
+        class: Monolog\Processor\WebProcessor
+        tags:
+            - { name: monolog.processor, handler: main }
+
+    monolog.processor.debug:
+        class: Debug\Monolog\Processor\Debug
+        tags:
+            - { name: monolog.processor, handler: main }
+
+    monolog.processor.guzzle:
+        class: Debug\Monolog\Processor\Guzzle
+        tags:
+            - { name: monolog.processor, handler: main }
+
+    monolog.processor.request_as_curl:
+        class: Debug\Monolog\Processor\RequestAsCurl
+        arguments:  [@request_stack]
+        tags:
+            - { name: monolog.processor, handler: main }
+```
+and then use logger service:
+
+```
+public function indexAction()
+{
+    $logger = $this->get('logger');
+    $logger->info('I just got the logger');
+    $logger->error('An error occurred');
+}
+```
+
+For projects without Symfony 2 framework.
+------------
+
+### Usage
+
+Just use your logger as shown below
 ```php
 Cascade::fileConfig($config);
 Log::info('Well, that works!');
 Log::error('Maybe not...', ['some'=>'extra data']);
 ```
 
-Configuring your loggers
-------------------------
+### Configuring your loggers
+
 Monolog Cascade supports the following config formats:
  - Yaml
  - JSON
