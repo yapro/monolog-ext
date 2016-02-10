@@ -37,7 +37,7 @@ class Guzzle
                 'postFields' => $postFields,
             ];
             if ($record['message']->getResponse()) {
-                $context['guzzleRequest']['response'] = mb_substr($record['message']->getResponse()->getBody(), 0, 3000);
+                $context['extra']['guzzleRequest']['response'] = mb_substr($record['message']->getResponse()->getBody(), 0, 3000);
             }
         }
     }
