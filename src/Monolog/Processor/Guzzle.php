@@ -15,13 +15,13 @@ class Guzzle
     public function __invoke(array $record)
     {
         if ($record['message'] instanceof RequestException || $record['message'] instanceof ConnectException) {
-            if(!array_key_exists('extra', $record)){
+            if (!array_key_exists('extra', $record)) {
                 $record['extra'] = [];
             }
             $request = $record['message']->getRequest();
             $body = $request->getBody();
             $postFields = [];
-            if($body instanceof PostBody) {
+            if ($body instanceof PostBody) {
                 $postFields = $body->getFields();
             }
             $headers = [];
@@ -35,8 +35,10 @@ class Guzzle
                 'method' => $request->getMethod(),
                 'headers' => implode('; ', $headers),
                 'postFields' => $postFields,
-                'response' => mb_strlen($record['message']->getResponse()->getBody(), 0, 3000),
             ];
+            if ($record['message']->getResponse()) {
+                $context['guzzleRequest']['response'] = mb_substr($record['message']->getResponse()->getBody(), 0, 3000);
+            }
         }
     }
 }
