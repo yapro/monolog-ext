@@ -1,24 +1,22 @@
 Debug
 ===============
 
-Debug is a [Monolog Cascade](https://github.com/theorchard/monolog-cascade) extension that which gives you the opportunity to handle and log errors of different levels.
-
-------------
-
-
 Installation
 ------------
 
 Add Debug as a requirement in your `composer.json` file or run
 ```sh
-$ composer require datravel/php-debug
+$ composer require yapro/debug dev-master
 ```
 
 For Symfony 2.x
 ------------
 
+It is a collection of monolog processors, that gives you the opportunity to handle and log different errors.
+
 Add needed for you services to file app/config/config.yml
 ```
+services:
     monolog.processor.web:
         class: Monolog\Processor\WebProcessor
         tags:
@@ -53,6 +51,8 @@ public function indexAction()
 
 For projects without Symfony 2 framework.
 ------------
+
+Debug is a [Monolog Cascade](https://github.com/theorchard/monolog-cascade) extension that which gives you the opportunity to handle and log errors of different levels.
 
 ### Usage
 
@@ -120,7 +120,7 @@ $config = [
 ];
 ```
 
-More informations about configurations - https://github.com/theorchard/monolog-cascade
+More detailed information about the configurations - https://github.com/theorchard/monolog-cascade
 
 
 What is ExtraException

@@ -5,6 +5,7 @@ namespace Debug\Monolog\Processor;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Exception\ConnectException;
 use GuzzleHttp\Post\PostBody;
+use GuzzleHttp\Message\ResponseInterface;
 
 class Guzzle
 {
@@ -36,7 +37,7 @@ class Guzzle
                 'headers' => implode('; ', $headers),
                 'postFields' => $postFields,
             ];
-            if ($record['message']->getResponse()) {
+            if ($record['message']->getResponse() instanceof ResponseInterface) {
                 $context['extra']['guzzleRequest']['response'] = mb_substr($record['message']->getResponse()->getBody(), 0, 3000);
             }
         }
