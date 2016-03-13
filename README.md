@@ -17,11 +17,6 @@ It is a collection of monolog processors, that gives you the opportunity to hand
 Add needed for you services to file app/config/config.yml
 ```
 services:
-    monolog.processor.web:
-        class: Monolog\Processor\WebProcessor
-        tags:
-            - { name: monolog.processor, handler: main }
-
     monolog.processor.debug:
         class: Debug\Monolog\Processor\Debug
         tags:
@@ -137,4 +132,29 @@ try {
     ...
 } catch (\Exception $e) {
     throw (new ExtraException())->setCustomTrace($e->getTraceAsString());
+```
+
+Recomendation
+------------------------
+Add service json_formatter to file app/config/config.yml
+It will help you to format error in the json, and then you can use https://www.elastic.co/products/kibana for aggregate all errors.
+```
+services:
+    json_formatter:
+        class: Monolog\Formatter\JsonFormatter
+```
+And don`t forget to add a monolog formatter:
+```
+monolog:
+    handlers:
+        main:
+            formatter: json_formatter
+```
+If you wish to collect some data of http request, you can add WebProcessor:
+```
+services:
+    monolog.processor.web:
+        class: Monolog\Processor\WebProcessor
+        tags:
+            - { name: monolog.processor, handler: main }
 ```
