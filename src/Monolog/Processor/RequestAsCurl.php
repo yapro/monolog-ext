@@ -37,7 +37,7 @@ class RequestAsCurl
         $parts = [
             'command' => 'curl',
             'headers' => implode(' ', $this->getHeaders()),
-            'url' => $request->getSchemeAndHttpHost() . $request->getPathInfo(),
+            'url' => $request->getUri(),
         ];
         if ($request->getMethod() !== 'GET') {
             $parts['data'] = '--data \'' . $request->getContent() . '\'';
