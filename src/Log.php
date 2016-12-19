@@ -273,4 +273,18 @@ final class Log
         }
         return trim($realTrace);
     }
+
+    /**
+     * remove trace-line which contains a call the current method
+     * @param string $traceAsStrings
+     * @param int $deleteRowsFromTop
+     * @return string
+     */
+    private function getRealTraceString2($traceAsStrings, $deleteRowsFromTop = 0)
+    {
+        for ($i = 0; $i < $deleteRowsFromTop; $i++) {
+            $traceAsStrings = strstr($traceAsStrings, PHP_EOL);// delete first string in $realTrace text
+        }
+        return trim($traceAsStrings);
+    }
 }

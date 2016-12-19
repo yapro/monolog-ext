@@ -9,6 +9,8 @@ use GuzzleHttp\Message\ResponseInterface;
 
 class Guzzle
 {
+    const MAXIMUM_LENGTH_OR_RESPONSE_BODY = 300;
+
     /**
      * @param  array $record
      * @return array
@@ -29,7 +31,7 @@ class Guzzle
             foreach ($request->getHeaders() as $name => $values) {
                 $headers[] = $name . ':' . implode(', ', $values);
             }
-            $context['extra']['guzzleRequest'] = [
+            $record['extra']['guzzleRequest'] = [
                 'host' => $request->getHost(),
                 'url' => $request->getUrl(),
                 'config' => $request->getConfig(),
@@ -38,8 +40,13 @@ class Guzzle
                 'postFields' => $postFields,
             ];
             if ($record['message']->getResponse() instanceof ResponseInterface) {
-                $context['extra']['guzzleRequest']['response'] = mb_substr($record['message']->getResponse()->getBody(), 0, 3000);
+                $responseBody = $record['message']->getResponse()->getBody();
+                if (mb_strlen($responseBody) === self::MAXIMUM_LENGTH_OR_RESPONSE_BODY) {
+                    $responseBody = mb_substr($responseBody, 0, self::MAXIMUM_LENGTH_OR_RESPONSE_BODY) . '...the message was cropped to 3000 symbols.';
+                }
+                $record['extra']['guzzleRequest']['response'] = $responseBody;
             }
         }
+        return $record;
     }
 }

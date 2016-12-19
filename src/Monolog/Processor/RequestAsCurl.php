@@ -30,6 +30,9 @@ class RequestAsCurl
      */
     public function __invoke(array $record)
     {
+        if (php_sapi_name() === 'cli'){
+            return $record;
+        }
         $request = $this->requestStack->getCurrentRequest();
         if ($request === null) {
             $request = Request::createFromGlobals();

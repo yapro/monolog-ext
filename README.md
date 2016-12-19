@@ -29,7 +29,7 @@ services:
 
     monolog.processor.request_as_curl:
         class: Debug\Monolog\Processor\RequestAsCurl
-        arguments:  [@request_stack]
+        arguments:  ["@request_stack"]
         tags:
             - { name: monolog.processor, handler: main }
 ```
@@ -41,6 +41,19 @@ public function indexAction()
     $logger = $this->get('logger');
     $logger->info('I just got the logger');
     $logger->error('An error occurred');
+
+    // monolog.processor.debug functionality: all of the above described methods will to write a stack trace of call place
+
+    $e = (new \ExtraException('Something wrong'))->setCustomTrace('My\nTrace')->setCode('My value');
+
+    $logger->warning($e, array(// $e will be serialize to string (Monolog`s functionality)
+       'my' => 'data',// some custom data
+    ));
+
+    $logger->warning('My error', array(
+       'my' => 'data',
+       'exception' => $e,// now you can see the above written custom stack trace as a string
+    ));
 }
 ```
 

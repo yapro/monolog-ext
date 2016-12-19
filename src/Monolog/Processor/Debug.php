@@ -13,28 +13,28 @@ class Debug
      */
     public function __invoke(array $record)
     {
-        if(!array_key_exists('extra', $record)){
+        if (!array_key_exists('extra', $record)) {
             $record['extra'] = null;
         }
         $e = null;
-        if(!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception){
+        if (!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception) {
             $e = $record['context']['exception'];
             unset($record['context']['exception']);
-        }elseif($record['message'] instanceof \Exception){
+        } elseif ($record['message'] instanceof \Exception) {
             $e = $record['message'];
-        }else{
+        } else {
             $e = null;
         }
 
         if ($e instanceof \Exception) {
             $record['message'] = $e->getMessage();
             $record['extra']['code'] = $e->getCode();
-            $record['extra']['exceptionClass'] = get_class($e);
+            $record['extra']['class'] = get_class($e);
             $record['extra']['trace'] = $e->getTraceAsString();
-            if(!array_key_exists('context', $record)){
+            if (!array_key_exists('context', $record)) {
                 $record['context'] = null;
             }
-            // Exception of lambda function not have this methods
+            // Exception of lambda function does not have file and line values:
             if ($e->getFile()) {
                 $record['context']['file'] = $e->getFile();
             }
@@ -42,23 +42,18 @@ class Debug
                 $record['context']['line'] = $e->getLine();
             }
         } else {
-            if(// \Symfony\Component\Debug\ErrorHandler::handleException
+            if (empty($record['context']['stack'])){// try to find real trace:
+                $record['context']['stack'] = $this->getStackTraceBeforeMonolog();
+            }
+            if (// Let`s get a stack which returned from \Symfony\Component\Debug\ErrorHandler::handleException and formatted to IDE-format
                 !empty($record['context']['stack']) &&
                 is_array($record['context']['stack'])
-            ){
+            ) {
                 // @todo delete it when in symfony will be implemented:
                 // https://github.com/symfony/symfony/pull/17168
                 // https://github.com/symfony/monolog-bundle/pull/153
                 $record['extra']['trace'] = self::getStackTraceForPhpStorm($record['context']['stack']);
                 unset($record['context']['stack']);
-            }else{
-                $e = new ExtraException();
-                // set real values of fields File and Line (if they will found)
-                $placeTheCall = self::getInfoTheCall($e);
-                $record['extra']['trace'] = self::getRealTraceString($e, $placeTheCall);
-                if ($e->getExtra()) {
-                    $record['extra'] = $e->getExtra();
-                }
             }
         }
 
@@ -66,52 +61,20 @@ class Debug
     }
 
     /**
-     * @param ExtraException $e
-     * @return int
+     * @return array
      */
-    private static function getInfoTheCall(ExtraException $e)
+    private static function getStackTraceBeforeMonolog()
     {
-        $placeTheCall = 0;
-        $trace = $e->getTrace();
-        foreach ($trace as $place => $info) {
-            if (array_key_exists('class', $info) && self::isNotTrackClass($info['class'])) {
-                $placeTheCall = $place;
-                // in latest iteration contained real file and line will
-                if (array_key_exists('file', $info)) {
-                    $e->setFile($info['file']);
-                }
-                if (array_key_exists('line', $info)) {
-                    $e->setLine($info['line']);
-                }
-            } else {
-                break;
+        $trace = (new \Exception())->getTrace();
+        foreach ($trace as $i => $info) {
+            if (array_key_exists('class', $info) && $info['class'] === 'Monolog\Logger') {
+                unset($trace[$i]);// remove a call from Monolog\Logger::addRecord
+                unset($trace[$i+1]);// remove a call from Monolog\Logger::info
+                return $trace;
             }
+            unset($trace[$i]);
         }
-        return $placeTheCall;
-    }
-
-    /**
-     * @param string $className
-     * @return bool : true - if class not tracked
-     */
-    private static function isNotTrackClass($className)
-    {
-        return ($className === self::class || $className === ErrorHandler::class);
-    }
-
-    /**
-     * remove trace-line which contains a call the current method
-     * @param ExtraException $e
-     * @param int $placeTheCall
-     * @return string
-     */
-    public static function getRealTraceString(ExtraException $e, $placeTheCall = 0)
-    {
-        $realTrace = $e->getCustomTrace();
-        for ($i = 0; $i < $placeTheCall; $i++) {
-            $realTrace = strstr($realTrace, PHP_EOL);
-        }
-        return trim($realTrace);
+        return $trace;
     }
 
     /**
@@ -148,14 +111,14 @@ class Debug
             }
             $file = '[internal function]';
             $line = '';
-            if(array_key_exists('file', $frame)){
+            if (array_key_exists('file', $frame)) {
                 $file = $frame['file'];
                 $line = $frame['line'];
             }
             $class = array_key_exists('class', $frame) ? $frame['class'] : '';
             $type = array_key_exists('type', $frame) ? $frame['type'] : '';
             $function = array_key_exists('function', $frame) ? $frame['function'] : '';
-            if(substr($function, 0, 16) === 'call_user_func:{'){
+            if (substr($function, 0, 16) === 'call_user_func:{') {
                 $function = substr($function, 0, 14);
             }
             $rtn .= sprintf("#%s %s(%s): %s%s%s(%s)\n",
