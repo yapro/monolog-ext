@@ -4,15 +4,22 @@ namespace Debug\Monolog\Processor;
 
 use Debug\ErrorHandler;
 use Debug\ExtraException;
+use Monolog\Logger;
 
 class Debug
 {
+    const DISABLE = 'disableMonologProcessorDebug';
+
     /**
      * @param  array $record
      * @return array
      */
     public function __invoke(array $record)
     {
+        $weakLevel = array_key_exists('level', $record) && $record['level'] < Logger::NOTICE;
+        if ($weakLevel === true || isset($record['context'][self::DISABLE])) {
+            return $record;
+        }
         if (!array_key_exists('extra', $record)) {
             $record['extra'] = null;
         }
@@ -69,7 +76,6 @@ class Debug
         foreach ($trace as $i => $info) {
             if (array_key_exists('class', $info) && $info['class'] === 'Monolog\Logger') {
                 unset($trace[$i]);// remove a call from Monolog\Logger::addRecord
-                unset($trace[$i+1]);// remove a call from Monolog\Logger::info
                 return $trace;
             }
             unset($trace[$i]);

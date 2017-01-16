@@ -32,6 +32,18 @@ services:
         arguments:  ["@request_stack"]
         tags:
             - { name: monolog.processor, handler: main }
+
+    symfony.listener.command_exception:
+         class: Debug\Symfony\ConsoleExceptionListener
+         arguments: ['@logger']
+         tags:
+            - { name: kernel.event_listener, event: console.exception }
+
+    symfony.listener.command_error:
+         class: Debug\Symfony\ErrorLoggerListener
+         arguments: ['@logger']
+         tags:
+            - { name: kernel.event_listener, event: console.terminate }
 ```
 and then use logger service:
 
