@@ -23,12 +23,12 @@ class Debug
         if (!array_key_exists('extra', $record)) {
             $record['extra'] = null;
         }
-        $e = null;
         if (!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception) {
             $e = $record['context']['exception'];
             unset($record['context']['exception']);
-        } elseif ($record['message'] instanceof \Exception) {
-            $e = $record['message'];
+        } elseif (!empty($record['context'][0]) && $record['context'][0] instanceof \Exception) {
+            $e = $record['context'][0];
+            unset($record['context'][0]);
         } else {
             $e = null;
         }

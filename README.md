@@ -58,7 +58,7 @@ public function indexAction()
 
     $e = (new \ExtraException('Something wrong'))->setCustomTrace('My\nTrace')->setCode('My value');
 
-    $logger->warning($e, array(// $e will be serialize to string (Monolog`s functionality)
+    $logger->notice($e, array(// $e will be serialize to string (Monolog`s functionality) and you will get: Message of Exception + Stack trace
        'my' => 'data',// some custom data
     ));
 
@@ -66,6 +66,8 @@ public function indexAction()
        'my' => 'data',
        'exception' => $e,// now you can see the above written custom stack trace as a string
     ));
+
+    $logger->warning('My error', array($e));// the short variant of version which you can see the above
 }
 ```
 
