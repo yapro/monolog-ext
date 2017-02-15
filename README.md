@@ -56,6 +56,8 @@ public function indexAction()
 
     // monolog.processor.debug functionality: all of the above described methods will to write a stack trace of call place
 
+    $e = new \Exception('Something wrong');
+    // or
     $e = (new \ExtraException('Something wrong'))->setCustomTrace('My\nTrace')->setCode('My value');
 
     $logger->notice($e, array(// $e will be serialize to string (Monolog`s functionality) and you will get: Message of Exception + Stack trace
