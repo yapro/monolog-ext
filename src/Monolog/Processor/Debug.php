@@ -2,13 +2,14 @@
 
 namespace Debug\Monolog\Processor;
 
-use Debug\ErrorHandler;
 use Debug\ExtraException;
 use Monolog\Logger;
+use Doctrine\Common\Util\Debug as DoctrineDebug;
 
 class Debug
 {
     const DISABLE = 'disableMonologProcessorDebug';
+    const DEPTH_LEVEL = 2;
 
     /**
      * @param  array $record
@@ -38,6 +39,9 @@ class Debug
             $record['extra']['code'] = $e->getCode();
             $record['extra']['class'] = get_class($e);
             $record['extra']['trace'] = $e->getTraceAsString();
+            if ($e instanceof ExtraException && $e->getExtra()) {
+                $context['extra']['info'] = $this->export($e->getExtra());
+            }
             if (!array_key_exists('context', $record)) {
                 $record['context'] = null;
             }
@@ -70,7 +74,7 @@ class Debug
     /**
      * @return array
      */
-    private static function getStackTraceBeforeMonolog()
+    private function getStackTraceBeforeMonolog()
     {
         $trace = (new \Exception())->getTrace();
         foreach ($trace as $i => $info) {
@@ -138,5 +142,19 @@ class Debug
             );
         }
         return $rtn;
+    }
+
+    /**
+     * @param mixed $value
+     * @return string
+     */
+    private function export($value = null)
+    {
+        $value = DoctrineDebug::export($value, self::DEPTH_LEVEL);
+        // if $context was object - he will be converted to \StdClass
+        if ($value instanceof \stdClass) {
+            $value = (array)$value;
+        }
+        return stripslashes(var_export($value, true));
     }
 }
