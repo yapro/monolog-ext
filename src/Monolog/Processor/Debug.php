@@ -40,7 +40,7 @@ class Debug
             $record['extra']['class'] = get_class($e);
             $record['extra']['trace'] = $e->getTraceAsString();
             if ($e instanceof ExtraException && $e->getExtra()) {
-                $context['extra']['info'] = $this->export($e->getExtra());
+                $record['extra']['info'] = $this->export($e->getExtra());
             }
             if (!array_key_exists('context', $record)) {
                 $record['context'] = null;
