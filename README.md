@@ -72,6 +72,11 @@ public function indexAction()
     $logger->warning('My error', array($e));// the short variant of version which you can see the above
 }
 ```
+By default \Debug\Monolog\Processor\Debug extract a extra data into string by standard depth`s level which is equal
+to two. But, you can use any depth`s level, example is equal a five:
+```
+    $logger->error('An error occurred', [ 'my myltidimantion array' => \Debug\DebugUtility::export($myArray, 5) ] );
+```
 
 For projects without Symfony 2 framework.
 ------------
