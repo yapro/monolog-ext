@@ -5,7 +5,6 @@ namespace Debug\Monolog\Processor;
 use Debug\DebugUtility;
 use Debug\ExtraException;
 use Monolog\Logger;
-use Doctrine\Common\Util\Debug as DoctrineDebug;
 
 class Debug
 {
@@ -36,6 +35,7 @@ class Debug
 
         if ($e instanceof \Exception) {
             $record['message'] = $e->getMessage();
+            
             $record['extra']['code'] = $e->getCode();
             $record['extra']['class'] = get_class($e);
             $record['extra']['trace'] = $e->getTraceAsString();
