@@ -28,9 +28,9 @@ final class ErrorHandler
     }
 
     /**
-     * @param \Exception $e
+     * @param \Throwable $e
      */
-    public function handleException(\Exception $e)
+    public function handleException($e)
     {
         $this->log($e);
     }
@@ -77,9 +77,9 @@ final class ErrorHandler
     }
 
     /**
-     * @param \Exception $e
+     * @param \Throwable $e
      */
-    private function log(\Exception $e)
+    private function log($e)
     {
         if ($this->isErrorIgnored($e->getCode())) {
             return;
