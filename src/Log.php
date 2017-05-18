@@ -132,7 +132,7 @@ final class Log
             'value' => $context,
         ];
 
-        if ($message instanceof \Exception) {
+        if (DebugUtility::isException($message)) {
             $e = $message;
             $message = $e->getMessage();
             $context['code'] = $e->getCode();

@@ -23,17 +23,17 @@ class Debug
         if (!array_key_exists('extra', $record)) {
             $record['extra'] = null;
         }
-        if (!empty($record['context']['exception']) && $record['context']['exception'] instanceof \Exception) {
+        if (!empty($record['context']['exception']) && DebugUtility::isException($record['context']['exception'])) {
             $e = $record['context']['exception'];
             unset($record['context']['exception']);
-        } elseif (!empty($record['context'][0]) && $record['context'][0] instanceof \Exception) {
+        } elseif (!empty($record['context'][0]) && DebugUtility::isException($record['context'][0])) {
             $e = $record['context'][0];
             unset($record['context'][0]);
         } else {
             $e = null;
         }
 
-        if ($e instanceof \Exception) {
+        if (DebugUtility::isException($e)) {
             $record['message'] = $e->getMessage();
             
             $record['extra']['code'] = $e->getCode();

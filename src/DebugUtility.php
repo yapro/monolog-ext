@@ -24,10 +24,10 @@ class DebugUtility
     }
 
     /**
-     * @param \Exception $e
+     * @param \Throwable $e
      * @return array
      */
-    public static function exportException(\Exception $e)
+    public static function exportException($e)
     {
         $record = array(
             'message' => $e->getMessage(),
@@ -46,5 +46,15 @@ class DebugUtility
             $record['line'] = $e->getLine();
         }
         return $record;
+    }
+
+    /**
+     * for support php 5.x and php 7.x
+     * @param mixed $e
+     * @return bool
+     */
+    public static function isException($e)
+    {
+        return $e instanceof \Exception || (class_exists('Throwable') && $e instanceof \Throwable);
     }
 }
