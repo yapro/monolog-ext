@@ -1,5 +1,6 @@
 Debug
 ===============
+Support php version >= 5
 
 Installation
 ------------
@@ -9,13 +10,13 @@ Add Debug as a requirement in your `composer.json` file or run
 $ composer require yapro/debug dev-master
 ```
 
-For Symfony 2.x
+For Symfony >= 2.x
 ------------
 
 It is a collection of monolog processors, that gives you the opportunity to handle and log different errors.
 
 Add needed for you services to file app/config/config.yml
-```
+```yml
 services:
     monolog.processor.debug:
         class: Debug\Monolog\Processor\Debug
@@ -45,25 +46,27 @@ services:
          tags:
             - { name: kernel.event_listener, event: console.terminate }
 ```
-and then use logger service:
+and then use logger service, examples:
 
-```
+```php
 public function indexAction()
 {
     $logger = $this->get('logger');
     $logger->info('I just got the logger');
     $logger->error('An error occurred');
-
-    // monolog.processor.debug functionality: all of the above described methods will to write a stack trace of call place
-
+```
+Functionality of monolog.processor.debug: all of the above described methods will to write a stack trace of call place
+```php
     $e = new \Exception('Something wrong');
     // or
     $e = (new \ExtraException('Something wrong'))->setCustomTrace('My\nTrace')->setCode('My value');
 
-    $logger->notice($e, array(// $e will be serialize to string (Monolog`s functionality) and you will get: Message of Exception + Stack trace
+    $logger->notice($e, array(
        'my' => 'data',// some custom data
     ));
-
+```
+Look up, variable $e will be serialized to string (Monolog`s functionality) and you will get: Message of Exception + Stack trace
+```php
     $logger->warning('My error', array(
        'my' => 'data',
        'exception' => $e,// now you can see the above written custom stack trace as a string
@@ -72,9 +75,9 @@ public function indexAction()
     $logger->warning('My error', array($e));// the short variant of version which you can see the above
 }
 ```
-By default \Debug\Monolog\Processor\Debug extract a extra data into string by standard depth`s level which is equal
-to two. But, you can use any depth`s level, example is equal a five:
-```
+By default \Debug\Monolog\Processor\Debug extract a extra data into string by standard depth's level which is equal
+to two. But, you can use any depth's level, example is equal a five:
+```php
     $logger->error('An error occurred', [ 'my myltidimantion array' => \Debug\DebugUtility::export($myArray, 5) ] );
 ```
 
@@ -157,11 +160,11 @@ What is ExtraException
 
 ExtraException is exception which you can to create as object, to add the extra data and throw away. After throwing the Debugger will catches this exception and saves extra data to logs. Examples:
 
-```
+```php
 throw (new ExtraException())->setExtra('mixed data');
 ```
 or:
-```
+```php
 try {
     ...
 } catch (\Exception $e) {
@@ -172,20 +175,20 @@ Recomendation
 ------------------------
 Add service json_formatter to file app/config/config.yml
 It will help you to format error in the json, and then you can use https://www.elastic.co/products/kibana for aggregate all errors.
-```
+```yml
 services:
     json_formatter:
         class: Monolog\Formatter\JsonFormatter
 ```
 And don`t forget to add a monolog formatter:
-```
+```yml
 monolog:
     handlers:
         main:
             formatter: json_formatter
 ```
 If you wish to collect some data of http request, you can add WebProcessor:
-```
+```yml
 services:
     monolog.processor.web:
         class: Monolog\Processor\WebProcessor
