@@ -20,3 +20,30 @@ On russian
 ■ Внешние ошибки, не учтенные в логике кода, могут оказаться дефектами программы. Например, слепое предположение о том, что подключение к базе данных всегда выполняется успешно, является ошибочным, поскольку приложение в таком случае, безусловно, не ответит корректно.
 
 ■ Логические ошибки гораздо труднее обнаруживать, чем внешние ошибки, поскольку их расположение по определению не известно. Однако чтобы выявить их, можно реализовать проверку непротиворечивости данных.
+
+Иерархия всех исключений в виде дерева:
+```
+┌Throwable
+├──Error
+│  ├──ArithmeticError
+│  ├──AssertionError
+│  ├──DivisionByZeroError
+│  ├──ParseError
+│  ├──TypeError
+│  └──ArgumentCountError
+└──Exception
+   ├──ErrorException
+   ├──LogicException
+   │  ├──BadFunctionCallException
+   │  │  └──BadMethodCallException
+   │  ├──DomainException
+   │  ├──InvalidArgumentException
+   │  ├──LengthException
+   │  └──OutOfRangeException
+   └──RuntimeException
+      ├──OutOfBoundsException
+      ├──OverflowException
+      ├──RangeException
+      ├──UnderflowException
+      └──UnexpectedValueException
+```
