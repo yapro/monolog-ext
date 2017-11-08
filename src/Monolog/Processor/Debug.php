@@ -34,8 +34,7 @@ class Debug
         }
 
         if (DebugUtility::isException($e)) {
-            $record['message'] = $e->getMessage();
-            
+            $record['extra']['message'] = $e->getMessage();
             $record['extra']['code'] = $e->getCode();
             $record['extra']['class'] = get_class($e);
             $record['extra']['trace'] = $e->getTraceAsString();
