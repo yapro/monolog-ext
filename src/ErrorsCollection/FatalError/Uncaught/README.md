@@ -1,1 +1,0 @@
-These errors are exception`s objects which thrown

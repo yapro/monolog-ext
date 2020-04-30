@@ -1,33 +1,35 @@
 {
-  "name":        "yapro/debug",
-  "description": "The Debug component provides tools to ease debugging PHP code.",
-  "version":     "0.0.7",
-  "type":        "library",
+  "name": "yapro/monologext",
+  "type": "library",
+  "description": "Very useful extensions for Monolog",
   "keywords":    ["php", "error", "debug", "library", "monolog", "cascade", "monolog extension", "monolog plugin", "monolog utils", "logger", "log"],
-  "homepage":    "https://github.com/yapro/debug",
-  "license":     "MIT",
-
+  "license": "proprietary",
+  "version": "1.0",
   "authors": [
     {
       "name": "Lebedenko Nikolay",
       "email": "totx@ya.ru",
+      "role": "Developer",
       "homepage": "http://yapro.ru"
     }
   ],
-
   "require": {
-    "doctrine/common": ">=2.0"
+    "php": ">=7.4",
+    "symfony/var-dumper": "^4.4|^5.0",
+    "monolog/monolog": "^1.25.1|^2",
+    "doctrine/dbal": "^2.5.4"
   },
-
-  "require-dev": {
-    "guzzlehttp/guzzle": "5.*"
-  },
-
   "autoload": {
     "psr-4": {
-      "Debug\\": "src/"
+      "YaPro\\MonologExt\\": "src/"
     }
   },
-
-  "target-dir": ""
+  "autoload-dev": {
+    "psr-4": {
+      "YaPro\\MonologExt\\Tests\\": "tests/"
+    }
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.5"
+  }
 }

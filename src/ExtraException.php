@@ -1,115 +1,55 @@
 <?php
 
-namespace Debug;
+declare(strict_types=1);
 
-final class ExtraException extends \Exception
+namespace YaPro\MonologExt;
+
+use Exception;
+use Throwable;
+
+/**
+ * Исключение позволяет передавать в свойстве 'extraData' дополнительные данные любого типа. Это очень удобно тем, что
+ * такой исключение переданный в Logger будет обработан Logger-процессором Logger\Processor\ExceptionProcessor
+ * который скажет Logger-у логировать 'extraData'. Вот 2 простых примера как пользоваться ExtraException-ом:
+ * try {
+ *      throw (new ExtraException())->setData(mixed);
+ * } catch (\Exception $e) {
+ *      $this->logger->error('My error message', [$e]);
+ *      $this->logger->error('My error message', ['exception' => $e,]);
+ *      throw $e;
+ * }.
+ */
+class ExtraException extends Exception
 {
-    /**
-     * @var string
-     */
-    private $customTrace;
-
     /**
      * @var mixed
      */
-    private $extra;
+    private $extraData;
 
-    /**
-     * @var string
-     */
-     private $extraCode;
-
-    /**
-     * @return string
-     */
-    public function getCustomTrace()
+    public function __construct($message = '', Throwable $previous = null, $code = 0)
     {
-        return $this->customTrace ?: $this->getTraceAsString();
-    }
-
-    /**
-     * @param string $customTrace
-     * @return $this
-     */
-    public function setCustomTrace($customTrace)
-    {
-        $this->customTrace = $customTrace;
-        return $this;
-    }
-
-    /**
-     * @param string $message
-     * @return $this
-     */
-    public function setMessage($message)
-    {
-        $this->message = $message;
-        return $this;
-    }
-
-    /**
-     * @param integer $code
-     * @return $this
-     */
-    public function setCode($code)
-    {
-        $this->code = $code;
-        return $this;
-    }
-
-    /**
-     * @param string $file
-     * @return $this
-     */
-    public function setFile($file)
-    {
-        $this->file = $file;
-        return $this;
-    }
-
-    /**
-     * @param integer $line
-     * @return $this
-     */
-    public function setLine($line)
-    {
-        $this->line = $line;
-        return $this;
+        // если понадобится использовать $code чаще чем $previous, то сделаем параметры mixed, а тут проверим и
+        // поменяем местами переменные, чтобы правильно их передать в parent
+        parent::__construct($message, $code, $previous);
     }
 
     /**
      * @return mixed
      */
-    public function getExtra()
+    public function getData()
     {
-        return $this->extra;
+        return $this->extraData;
     }
 
     /**
-     * @param mixed $extra
-     * @return $this
+     * @param mixed $extraData
+     *
+     * @return self
      */
-    public function setExtra($extra)
+    public function setData($extraData): self
     {
-        $this->extra = $extra;
-        return $this;
-    }
+        $this->extraData = $extraData;
 
-    /**
-     * @return string
-     */
-    public function getExtraCode()
-    {
-        return $this->extraCode;
-    }
-
-    /**
-     * @param string $extraCode
-     * @return self;
-     */
-    public function setExtraCode($extraCode)
-    {
-        $this->extraCode = $extraCode;
         return $this;
     }
 }

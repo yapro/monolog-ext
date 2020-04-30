@@ -1,3 +1,0 @@
-<?php
-define('TRICK', 'nothing');
-define('TRICK', 'nothing');// PHP Notice:  Constant TRICK already defined in ...
