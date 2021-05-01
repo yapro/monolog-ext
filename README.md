@@ -7,7 +7,7 @@ Installation
 
 Add Debug as a requirement in your `composer.json` file or run
 ```sh
-$ composer require yapro/debug dev-master
+$ composer require yapro/debug dev-php5
 ```
 
 For Symfony >= 2.x
