@@ -20,7 +20,7 @@ Dev
 ------------
 ```sh
 docker build -t yapro/monologext:latest -f ./Dockerfile ./
-docker run --rm -v $(pwd):/app -w /app yapro/monologext:latest bash
+docker run -it --rm -v $(pwd):/app -w /app yapro/monologext:latest bash
 composer install --optimize-autoloader --no-scripts --no-interaction
 ./vendor/bin/phpunit tests/
 ```
