@@ -5,14 +5,11 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Tests\Unit\Processor;
 
 use Exception;
-use YaPro\MonologExt\Processor\AddLogRecordStackTraceForPhpStormProcessor;
+use YaPro\MonologExt\Processor\AddStackTraceForPhpStormProcessor;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
-/**
- * Тестирование \YaPro\MonologExt\Processor\AddLogRecordStackTraceForPhpStormProcessor
- */
-class AddLogRecordStackTraceForPhpStormProcessorTest extends TestCase
+class AddStackTraceForPhpStormProcessorTest extends TestCase
 {
     private const EXAMPLE_STACK_TRACE_STRING = 'EXAMPLE_STACK_TRACE_STRING';
 
@@ -52,7 +49,7 @@ class AddLogRecordStackTraceForPhpStormProcessorTest extends TestCase
      */
     public function testInvoke(array $record, array $expected)
     {
-        $processor = $this->getMockBuilder(AddLogRecordStackTraceForPhpStormProcessor::class)
+        $processor = $this->getMockBuilder(AddStackTraceForPhpStormProcessor::class)
             ->setMethodsExcept(['__invoke'])
             ->getMock();
         $processor->method('getStackTraceForPhpStorm')->willReturn(self::EXAMPLE_STACK_TRACE_STRING);
@@ -99,7 +96,7 @@ class AddLogRecordStackTraceForPhpStormProcessorTest extends TestCase
      */
     public function testGetFrameToString(array $input, string $expectedReturn): void
     {
-        $processor = new AddLogRecordStackTraceForPhpStormProcessor();
+        $processor = new AddStackTraceForPhpStormProcessor();
 
         $class = new ReflectionClass($processor);
         $method = $class->getMethod('getFrameToString');
@@ -149,7 +146,7 @@ class AddLogRecordStackTraceForPhpStormProcessorTest extends TestCase
      */
     public function testGetArgsToString(array $input, ?string $expectedReturn)
     {
-        $processor = new AddLogRecordStackTraceForPhpStormProcessor();
+        $processor = new AddStackTraceForPhpStormProcessor();
 
         $class = new ReflectionClass($processor);
         $method = $class->getMethod('getArgsToString');

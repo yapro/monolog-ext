@@ -9,8 +9,8 @@ use Throwable;
 
 /**
  * Исключение позволяет передавать в свойстве 'extraData' дополнительные данные любого типа. Это очень удобно тем, что
- * такой исключение переданный в Logger будет обработан Logger-процессором Logger\Processor\ExceptionProcessor
- * который скажет Logger-у логировать 'extraData'. Вот 2 простых примера как пользоваться ExtraException-ом:
+ * такое исключение переданное в Logger будет обработано Logger-процессором AddInformationAboutExceptionProcessor
+ * который добавит в log-record указанные 'extraData'. Вот 2 простых примера использования:
  * try {
  *      throw (new ExtraException())->setData(mixed);
  * } catch (\Exception $e) {

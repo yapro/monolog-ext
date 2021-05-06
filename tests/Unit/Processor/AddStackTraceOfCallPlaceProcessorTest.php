@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Tests\Unit\Processor;
 
-use YaPro\MonologExt\Processor\AddLogRecordStackTraceProcessor;
+use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Тестирование \YaPro\MonologExt\Processor\AddLogRecordStackTraceProcessor
- */
-class AddLogRecordStackTraceProcessorTest extends TestCase
+class AddStackTraceOfCallPlaceProcessorTest extends TestCase
 {
     public function invokeProvider(): array
     {
@@ -40,7 +37,7 @@ class AddLogRecordStackTraceProcessorTest extends TestCase
      */
     public function testInvoke(array $record, array $stackTraceBeforeMonolog, array $expectedStack)
     {
-        $processor = $this->getMockBuilder(AddLogRecordStackTraceProcessor::class)
+        $processor = $this->getMockBuilder(AddStackTraceOfCallPlaceProcessor::class)
             ->setMethodsExcept(['disableOnce', '__invoke'])
             ->getMock();
         $processor->method('getStackTraceBeforeMonolog')->willReturn($stackTraceBeforeMonolog);
@@ -98,7 +95,7 @@ class AddLogRecordStackTraceProcessorTest extends TestCase
      */
     public function testGetStackTraceBeforeMonolog(array $recordArg, array $expected)
     {
-        $processor = new AddLogRecordStackTraceProcessor();
+        $processor = new AddStackTraceOfCallPlaceProcessor();
         $this->assertEquals($expected, $processor->getStackTraceBeforeMonolog($recordArg));
     }
 }

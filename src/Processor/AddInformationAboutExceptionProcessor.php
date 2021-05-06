@@ -15,8 +15,8 @@ use Throwable;
  *      throw new Exception();
  * } catch (\Exception $e) {
  *      $this->logger->error('My error message', [$e]);
- *      // Если не нужно, чтобы ExceptionProcessor НЕ обрабатывал запись:
- *      $this->logger->error('My error message', [$e, ExceptionProcessor::DISABLE => true ]);
+ *      // Если не нужно, чтобы данный Processor НЕ обрабатывал запись:
+ *      $this->logger->error('My error message', [$e, AddInformationAboutExceptionProcessor::DISABLE => true ]);
  *      // Не будет работать, если передать исключение вторым аргументом:
  *      $this->logger->error('My error message', ['bar', $e,]);
  *      // но, будет работать если указать ключ exception:
@@ -24,12 +24,12 @@ use Throwable;
  *      throw $e;
  * }.
  */
-class ExceptionProcessor
+class AddInformationAboutExceptionProcessor
 {
     /**
      * @cont - ключ флага отключения процессора
      */
-    public const DISABLE = 'disableExceptionProcessor';
+    public const DISABLE = 'disableAddInformationAboutExceptionProcessor';
 
     /**
      * @var int уровень log-records которые будут обрабатываться, т.е. records уровнем меньше - обрабатываться не будут.

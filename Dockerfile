@@ -17,11 +17,4 @@ RUN docker-php-ext-configure zip \
 RUN curl https://getcomposer.org/download/2.0.12/composer.phar --output /usr/bin/composer && \
     chmod +x /usr/bin/composer
 
-COPY . /app
-
-RUN cd /app && composer install --optimize-autoloader --no-scripts --no-interaction
-
-# testing
-RUN /app/vendor/bin/phpunit /app/tests
-
-#RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*

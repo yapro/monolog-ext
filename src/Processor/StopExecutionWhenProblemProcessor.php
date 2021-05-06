@@ -51,6 +51,6 @@ class StopExecutionWhenProblemProcessor
     {
         print_r((new Exception())->getTraceAsString());
         fwrite(STDERR, PHP_EOL . __FILE__ . ':' . __LINE__ . ' : ' . print_r($record, true) . PHP_EOL);
-        trigger_error('', E_USER_ERROR);
+        trigger_error(__CLASS__ . ':' . __METHOD__, E_USER_ERROR);
     }
 }

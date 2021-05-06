@@ -7,9 +7,9 @@ namespace YaPro\MonologExt\Processor;
 use Exception;
 
 /**
- * Добавляет стек вызовов места возникновения log-record (полезно, когда нужно понять в каком контексте произошла проблема).
+ * Добавляет стектрейс места возникновения log-record (помогает понять в каком контексте произошла проблема).
  */
-class AddLogRecordStackTraceProcessor
+class AddStackTraceOfCallPlaceProcessor
 {
     public function __invoke(array $record): array
     {

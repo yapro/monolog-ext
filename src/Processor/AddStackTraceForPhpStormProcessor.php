@@ -5,10 +5,9 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Processor;
 
 /**
- * Процессор получает строковое представление стека вызовов ['context']['stack']
- * пригодное для PhpStorm
+ * Процессор получает строковое представление стека вызовов ['context']['stack'] пригодное для PhpStorm
  */
-class AddLogRecordStackTraceForPhpStormProcessor
+class AddStackTraceForPhpStormProcessor
 {
     public function __invoke(array $record): array
     {

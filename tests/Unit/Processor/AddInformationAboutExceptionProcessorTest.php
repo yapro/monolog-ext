@@ -7,13 +7,10 @@ namespace YaPro\MonologExt\Tests\Unit\Processor;
 use Exception;
 use Monolog\Logger;
 use YaPro\MonologExt\ExtraException;
-use YaPro\MonologExt\Processor\ExceptionProcessor;
+use YaPro\MonologExt\Processor\AddInformationAboutExceptionProcessor;
 use PHPUnit\Framework\TestCase;
 
-/**
- * Тестирование \YaPro\MonologExt\Processor\ExceptionProcessor
- */
-class ExceptionProcessorTest extends TestCase
+class AddInformationAboutExceptionProcessorTest extends TestCase
 {
     /**
      * @const - заготовка для "мока" dumpException()
@@ -61,13 +58,13 @@ class ExceptionProcessorTest extends TestCase
                 'input' => [
                     'record' => [
                         'level' => Logger::WARNING,
-                        'context' => ['foo' => 'bar', ExceptionProcessor::DISABLE => true],
+                        'context' => ['foo' => 'bar', AddInformationAboutExceptionProcessor::DISABLE => true],
                     ],
                     'getExceptionReturn' => new Exception(),
                 ],
                 'expected' => [
                     'level' => Logger::WARNING,
-                    'context' => ['foo' => 'bar', ExceptionProcessor::DISABLE => true],
+                    'context' => ['foo' => 'bar', AddInformationAboutExceptionProcessor::DISABLE => true],
                 ],
             ],
             [   // 4 кейс - исключение отсутствует
@@ -108,17 +105,17 @@ class ExceptionProcessorTest extends TestCase
     public function testInvoke(array $input, array $expected): void
     {
         // создаем частичный "мок" процессора
-        $exceptionProcessor = $this->getMockBuilder(ExceptionProcessor::class)
+        $processor = $this->getMockBuilder(AddInformationAboutExceptionProcessor::class)
             ->setConstructorArgs(['logLevel' => 'WARNING'])
             ->setMethodsExcept(['__invoke'])
             ->getMock();
 
         // "мокаем" все метод кроме тестируемого
-        $exceptionProcessor->method('getException')->willReturn($input['getExceptionReturn']);
-        $exceptionProcessor->method('dumpException')->willReturn(self::DUMP_EXCEPTION_MOCK);
-        $exceptionProcessor->method('dump')->willReturn(self::DUMP_VAR_MOCK);
+        $processor->method('getException')->willReturn($input['getExceptionReturn']);
+        $processor->method('dumpException')->willReturn(self::DUMP_EXCEPTION_MOCK);
+        $processor->method('dump')->willReturn(self::DUMP_VAR_MOCK);
 
-        $result = $exceptionProcessor($input['record']);
+        $result = $processor($input['record']);
 
         $this->assertEquals($expected, $result);
     }
@@ -160,7 +157,7 @@ class ExceptionProcessorTest extends TestCase
      */
     public function testGetException(array $inputContext, bool $isReturnException): void
     {
-        $processor = new ExceptionProcessor();
+        $processor = new AddInformationAboutExceptionProcessor();
         // для метода важно только содержание "context"
         $input = ['context' => $inputContext];
 
