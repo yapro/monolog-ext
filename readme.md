@@ -10,7 +10,7 @@ Add as a requirement in your `composer.json` file or run
 composer require yapro/monologext dev-master
 ```
 
-For Symfony >= 2.x
+Configuration Symfony >= 2.x
 ------------
 
 It is a collection of monolog processors, that gives you the opportunity to handle and log different errors.
@@ -35,6 +35,20 @@ services:
       class: YaPro\MonologExt\Processor\StopExecutionWhenProblemProcessor
       tags:
         - { name: monolog.processor, handler: main }
+
+    # Adds a request as curl command to a log record
+    # Old version - https://github.com/yapro/monologext/blob/php5/src/Monolog/Processor/RequestAsCurl.php
+    monolog.processor.request_as_curl:
+      class: Debug\Monolog\Processor\RequestAsCurl
+      arguments:  ["@request_stack"]
+      tags:
+        - { name: monolog.processor, handler: main }
+
+    # not implemented yet. Old version - https://github.com/yapro/monologext/blob/php5/src/Monolog/Processor/Guzzle.php
+    monolog.processor.guzzle:
+        class: Debug\Monolog\Processor\Guzzle
+        tags:
+            - { name: monolog.processor, handler: main }
 ```
 and then use logger service, examples:
 
@@ -50,7 +64,6 @@ $logger->warning('My warning', array(
    'exception' => $e,// now you can see the above written custom stack trace as a string
 ));
 $logger->warning('My second warning', array($e));// the short variant of version which you can see the above
-}
 ```
 By default, \YaPro\MonologExt\VarHelper extract an extra data into string by standard depth's level which is equal
 to two. But, you can use any depth's level, example is equal a five:
@@ -58,10 +71,46 @@ to two. But, you can use any depth's level, example is equal a five:
 $logger->error('An error occurred', [ 'my mixed type var' => VarHelper::dump($myVar, 5) ] );
 ```
 
-For projects without Symfony 2 framework.
+What is ExtraException
+------------------------
+
+ExtraException is exception which you can to create as object, to add the extra data and throw away. After throwing the 
+Monolog ExceptionProcessor will catches this exception and saves extra data to logs. Examples:
+
+```php
+throw (new ExtraException())->setExtra('mixed data');
+```
+
+Recommendation
+------------------------
+Add service json_formatter to file app/config/config.yml
+It will help you to format error in the json, and then you can use https://www.elastic.co/products/kibana for aggregate all errors.
+```yml
+services:
+    json_formatter:
+        class: Monolog\Formatter\JsonFormatter
+```
+And don`t forget to add a monolog formatter:
+```yml
+monolog:
+    handlers:
+        main:
+            formatter: json_formatter
+```
+If you wish to collect some data of http request, you can add WebProcessor:
+```yml
+services:
+    monolog.processor.web:
+        class: Monolog\Processor\WebProcessor
+        tags:
+            - { name: monolog.processor, handler: main }
+```
+
+Configuration for projects without Symfony framework.
 ------------
 
-Debug is a [Monolog Cascade](https://github.com/theorchard/monolog-cascade) extension that which gives you the opportunity to handle and log errors of different levels.
+[Monolog Cascade](https://github.com/theorchard/monolog-cascade) extension gives you the opportunity to 
+handle and log errors of different levels.
 
 ### Usage
 
@@ -130,42 +179,6 @@ $config = [
 ```
 
 More detailed information about the configurations - https://github.com/theorchard/monolog-cascade
-
-
-What is ExtraException
-------------------------
-
-ExtraException is exception which you can to create as object, to add the extra data and throw away. After throwing the 
-Monolog ExceptionProcessor will catches this exception and saves extra data to logs. Examples:
-
-```php
-throw (new ExtraException())->setExtra('mixed data');
-```
-
-Recommendation
-------------------------
-Add service json_formatter to file app/config/config.yml
-It will help you to format error in the json, and then you can use https://www.elastic.co/products/kibana for aggregate all errors.
-```yml
-services:
-    json_formatter:
-        class: Monolog\Formatter\JsonFormatter
-```
-And don`t forget to add a monolog formatter:
-```yml
-monolog:
-    handlers:
-        main:
-            formatter: json_formatter
-```
-If you wish to collect some data of http request, you can add WebProcessor:
-```yml
-services:
-    monolog.processor.web:
-        class: Monolog\Processor\WebProcessor
-        tags:
-            - { name: monolog.processor, handler: main }
-```
 
 Tests
 ------------
