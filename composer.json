@@ -1,5 +1,5 @@
 {
-  "name": "yapro/monologext",
+  "name": "yapro/monolog-ext",
   "type": "library",
   "description": "Very useful extensions for Monolog",
   "keywords":    ["php", "error", "debug", "library", "monolog", "cascade", "monolog extension", "monolog plugin", "monolog utils", "logger", "log"],
