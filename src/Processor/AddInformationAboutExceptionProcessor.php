@@ -15,7 +15,7 @@ use Throwable;
  *      throw new Exception();
  * } catch (\Exception $e) {
  *      $this->logger->error('My error message', [$e]);
- *      // Если не нужно, чтобы данный Processor НЕ обрабатывал запись:
+ *      // Если нужно, чтобы данный Processor НЕ обрабатывал запись:
  *      $this->logger->error('My error message', [$e, AddInformationAboutExceptionProcessor::DISABLE => true ]);
  *      // Не будет работать, если передать исключение вторым аргументом:
  *      $this->logger->error('My error message', ['bar', $e,]);
