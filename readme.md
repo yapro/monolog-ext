@@ -75,7 +75,7 @@ $logger->warning('My second warning', array($e));// the short variant of version
 By default, \YaPro\MonologExt\VarHelper extract an extra data into string by standard depth's level which is equal
 to two. But, you can use any depth's level, example is equal a five:
 ```php
-$logger->error('An error occurred', [ 'my mixed type var' => VarHelper::dump($myVar, 5) ] );
+$logger->error('An error occurred', [ 'my mixed type var' => (new VarHelper)->dump($myVar, 5) ] );
 ```
 
 What is ExtraException
