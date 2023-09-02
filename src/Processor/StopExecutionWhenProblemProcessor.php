@@ -49,8 +49,9 @@ class StopExecutionWhenProblemProcessor
      */
     public function handler(array $record)
     {
-        print_r((new Exception())->getTraceAsString());
-        fwrite(STDERR, PHP_EOL . __FILE__ . ':' . __LINE__ . ' : ' . print_r($record, true) . PHP_EOL);
-        trigger_error(__CLASS__ . ':' . __METHOD__, E_USER_ERROR);
+        $message = $record['message'] ?? 'no message';
+        $message .= PHP_EOL . (new Exception())->getTraceAsString();
+        fwrite(STDERR, PHP_EOL . __FILE__ . ':' . __LINE__ . ' : ' . $message . PHP_EOL);
+        // trigger_error() вызвать нельзя, т.к. выполнится перехват хендлером, например \Symfony\Bridge\PhpUnit\DeprecationErrorHandler::handleError()
     }
 }
