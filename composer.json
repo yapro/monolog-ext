@@ -4,7 +4,6 @@
   "description": "Very useful extensions for Monolog",
   "keywords":    ["php", "error", "debug", "library", "monolog", "cascade", "monolog extension", "monolog plugin", "monolog utils", "logger", "log"],
   "license": "proprietary",
-  "version": "1.0",
   "authors": [
     {
       "name": "Lebedenko Nikolay",
