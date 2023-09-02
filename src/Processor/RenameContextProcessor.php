@@ -15,6 +15,7 @@ class RenameContextProcessor
     {
         $this->destinationFieldName = $destinationFieldName;
     }
+
     public function __invoke(array $record): array
     {
         if (isset($record['context'])) {

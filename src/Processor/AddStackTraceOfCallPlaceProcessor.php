@@ -7,7 +7,7 @@ namespace YaPro\MonologExt\Processor;
 use Exception;
 
 /**
- * Добавляет стектрейс места возникновения log-record (помогает понять в каком контексте произошла проблема).
+ * Добавляет стектрейс места возникновения log-record (помогает понять в каком месте контекста произошла проблема).
  */
 class AddStackTraceOfCallPlaceProcessor
 {

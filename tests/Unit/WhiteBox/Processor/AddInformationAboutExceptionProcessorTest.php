@@ -15,8 +15,6 @@ use YaPro\MonologExt\ExtraException;
 use YaPro\MonologExt\Processor\AddInformationAboutExceptionProcessor;
 use YaPro\MonologExt\VarHelper;
 
-use function interface_exists;
-
 class AddInformationAboutExceptionProcessorTest extends TestCase
 {
     use LiberatorTrait;
@@ -116,8 +114,10 @@ class AddInformationAboutExceptionProcessorTest extends TestCase
                     )
                 ),
                 'expected' => [
-                    'third', 'previous' => [
-                        'second', 'previous' => [
+                    'third',
+                    'previous' => [
+                        'second',
+                        'previous' => [
                             'first',
                         ],
                     ],
@@ -125,14 +125,18 @@ class AddInformationAboutExceptionProcessorTest extends TestCase
             ],
             [
                 'value' =>
-                        new Exception('third', 3,
-                            new Exception('second', 2,
-                                new Exception('first')
+                    new Exception(
+                        'third', 3,
+                        new Exception(
+                            'second', 2,
+                            new Exception('first')
                         )
                     ),
                 'expected' => [
-                    'third', 'previous' => [
-                        'second', 'previous' => [
+                    'third',
+                    'previous' => [
+                        'second',
+                        'previous' => [
                             'first',
                         ],
                     ],
@@ -159,7 +163,9 @@ class AddInformationAboutExceptionProcessorTest extends TestCase
         $varHelper->method('dumpException')->willReturnCallback(function (Throwable $exception) {
             return [$exception->getMessage()];
         });
-        $varHelper->method('dump')->willReturnCallback(function ($value) { return $value; });
+        $varHelper->method('dump')->willReturnCallback(function ($value) {
+            return $value;
+        });
         $this->setClassPropertyValue($processor, 'varHelper', $varHelper);
 
         $result = $processor->handleException($exception, $maxDepthLevel);
