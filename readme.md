@@ -37,6 +37,12 @@ services:
     tags:
       - { name: monolog.processor, handler: main }
 
+  # Moves the contents of the content field to the field specified in the processor constructor + removes the context field
+  YaPro\MonologExt\Processor\RenameContextProcessor:
+    class: YaPro\MonologExt\Processor\RenameContextProcessor
+    tags:
+      - { name: monolog.processor, handler: main, priority: -1 }
+
   # Adds a request as curl command to a log record
   # Old version - https://github.com/yapro/monolog-ext/blob/php5/src/Monolog/Processor/RequestAsCurl.php
   monolog.processor.request_as_curl:
@@ -200,6 +206,14 @@ Dev
 ------------
 ```sh
 docker build -t yapro/monolog-ext:latest -f ./Dockerfile ./
-docker run -it --rm -v $(pwd):/app -w /app yapro/monolog-ext:latest bash
+docker run -it --rm --user=$(id -u):$(id -g) --add-host=host.docker.internal:host-gateway -v $(pwd):/app -w /app yapro/monolog-ext:latest bash
 composer install -o
+```
+Run tests with xdebug:
+```shell
+PHP_IDE_CONFIG="serverName=common" \
+XDEBUG_SESSION=common \
+XDEBUG_MODE=debug \
+XDEBUG_CONFIG="max_nesting_level=200 client_port=9003 client_host=host.docker.internal" \
+/app/vendor/bin/phpunit /app/tests
 ```

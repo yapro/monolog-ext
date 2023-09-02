@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace YaPro\MonologExt\Tests\Unit\Processor;
+namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
-use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 use PHPUnit\Framework\TestCase;
+use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 
 class AddStackTraceOfCallPlaceProcessorTest extends TestCase
 {

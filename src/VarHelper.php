@@ -61,6 +61,7 @@ class VarHelper
             'class' => get_class($exception),
             'trace' => $exception->getTraceAsString(),
         ];
+        // lambda function Exception doesn't have file and line values:
         if ($exception->getFile()) {
             $context['file'] = $exception->getFile();
         }

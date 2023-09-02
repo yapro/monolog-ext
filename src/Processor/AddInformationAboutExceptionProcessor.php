@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Processor;
 
 use Monolog\Logger;
-use YaPro\MonologExt\ExtraException;
+use YaPro\MonologExt\ExtraDataExceptionInterface;
 use YaPro\MonologExt\VarHelper;
 use Throwable;
 
@@ -15,12 +15,11 @@ use Throwable;
  *      throw new Exception();
  * } catch (\Exception $e) {
  *      $this->logger->error('My error message', [$e]);
+ *      $this->logger->error('My error message', ['foo' => 'bar', 'exception' => $e]);
  *      // Если нужно, чтобы данный Processor НЕ обрабатывал запись:
- *      $this->logger->error('My error message', [$e, AddInformationAboutExceptionProcessor::DISABLE => true ]);
- *      // Не будет работать, если передать исключение вторым аргументом:
- *      $this->logger->error('My error message', ['bar', $e,]);
- *      // но, будет работать если указать ключ exception:
- *      $this->logger->error('My error message', ['foo' => 'bar', 'exception' => $e,]);
+ *      $this->logger->error('My error message', [$e, AddInformationAboutExceptionProcessor::DISABLE => true]);
+ *      // Если нужно, чтобы данный Processor обработал запись с исключениями только на указанную глубину вложенности:
+ *      $this->logger->error('My error message', [$e, AddInformationAboutExceptionProcessor::DEPTH_LEVEL => 3]);
  *      throw $e;
  * }.
  */
@@ -32,18 +31,30 @@ class AddInformationAboutExceptionProcessor
     public const DISABLE = 'disableAddInformationAboutExceptionProcessor';
 
     /**
-     * @var int уровень log-records которые будут обрабатываться, т.е. records уровнем меньше - обрабатываться не будут.
+     * @cont - ключ флага максимальной глубинны вложенности исключений при экспорте
      */
-    private int $logLevel;
+    public const DEPTH_LEVEL = 'depthLevelAddInformationAboutExceptionProcessor';
+    public const THE_MAX_DEPTH_LEVEL_HAS_BEEN_REACHED_MESSAGE = 'The max depth level has been reached';
 
+    private int $logLevel;
+    private int $maxDepthLevel;
     private VarHelper $varHelper;
 
-    public function __construct(string $logLevel = 'INFO')
+    // Banki.ru supporting
+    public const BANKI_EXTRA_DATA_EXCEPTION_INTERFACE = '\Bankiru\LogContracts\Exception\ExtraDataExceptionInterface';
+    private bool $isBankiExtraDataExceptionInterfaceExists;
+
+    /**
+     * @param string $logLevel - уровень log-records, которые будут залогированы
+     * @param int $maxDepthLevel - максимальный уровень вложенности исключений при экспорте
+     */
+    public function __construct(string $logLevel = 'DEBUG', int $maxDepthLevel = 100500)
     {
         $this->logLevel = Logger::toMonologLevel($logLevel);
-
+        $this->maxDepthLevel = $maxDepthLevel;
         // использование статических методов Не приветствуется PHPMD, используем "инстанс"
         $this->varHelper = new VarHelper();
+        $this->isBankiExtraDataExceptionInterfaceExists = interface_exists(self::BANKI_EXTRA_DATA_EXCEPTION_INTERFACE);
     }
 
     public function __invoke(array $record): array
@@ -58,57 +69,49 @@ class AddInformationAboutExceptionProcessor
         if (isset($record['context'][self::DISABLE])) {
             return $record;
         }
-
-        $exception = $this->getException($record);
-        if (!$exception) {
-            // исключение не найдено
-            return $record;
+        $maxDepthLevel = $record['context'][self::DEPTH_LEVEL] ?? $this->maxDepthLevel;
+        foreach ($record['context'] as $key => $value) {
+            $record['context'][$key] = $this->handleException($value, $maxDepthLevel);
         }
-
-        if ($exception instanceof ExtraException && $exception->getData()) {
-            $record['extra']['data'] = $this->dump($exception->getData());
-        }
-
-        // преобразовываем Исключение и экспортируем в "context" записи
-        if (isset($record['context'])) {
-            $record['context'] = array_merge($record['context'], $this->dumpException($exception));
-
-            return $record;
-        }
-        $record['context'] = $this->dumpException($exception);
 
         return $record;
     }
 
     /**
-     * Получение исключения из контекста записи лога
-     * - исключение обрабатывается только если находится в ['context']['exception'] или ['context'][0]
+     * @internal private
      */
-    public function getException(array &$record): ?Throwable
+    public function handleException($exception, int $maxDepthLevel, int $level = 0)
     {
-        if (isset($record['context']['exception']) && $record['context']['exception'] instanceof Throwable) {
-            $exception = $record['context']['exception'];
-            unset($record['context']['exception']);
-
+        if (!$exception instanceof Throwable) {
             return $exception;
         }
-        if (isset($record['context'][0]) && $record['context'][0] instanceof Throwable) {
-            $exception = $record['context'][0];
-            unset($record['context'][0]);
-
-            return $exception;
+        if ($level > $maxDepthLevel) {
+            return self::THE_MAX_DEPTH_LEVEL_HAS_BEEN_REACHED_MESSAGE;
+        }
+        $result = $this->varHelper->dumpException($exception);
+        if ($this->isExtraDataExists($exception)) {
+            $result['extraData'] = $this->varHelper->dump($exception->getData());
+        }
+        if ($exception = $exception->getPrevious()) {
+            $result['previous'] = $this->handleException($exception, $maxDepthLevel, ++$level);
         }
 
-        return null;
+        return $result;
     }
 
-    public function dumpException(Throwable $exception): array
+    public function isExtraDataExists($exception): bool
     {
-        return $this->varHelper->dumpException($exception);
-    }
+        if ($exception instanceof ExtraDataExceptionInterface && $exception->getData()) {
+            return true;
+        }
+        if (
+            $this->isBankiExtraDataExceptionInterfaceExists &&
+            is_a($exception, self::BANKI_EXTRA_DATA_EXCEPTION_INTERFACE) &&
+            $exception->getData()
+        ) {
+            return true;
+        }
 
-    public function dump($value): string
-    {
-        return $this->varHelper->dump($value);
+        return false;
     }
 }

@@ -19,7 +19,7 @@ use Throwable;
  *      throw $e;
  * }.
  */
-class ExtraException extends Exception
+class ExtraException extends Exception implements ExtraDataExceptionInterface
 {
     /**
      * @var mixed

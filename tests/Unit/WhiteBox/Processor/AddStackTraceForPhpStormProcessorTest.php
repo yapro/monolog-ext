@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace YaPro\MonologExt\Tests\Unit\Processor;
+namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
 use Exception;
-use YaPro\MonologExt\Processor\AddStackTraceForPhpStormProcessor;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
+use YaPro\MonologExt\Processor\AddStackTraceForPhpStormProcessor;
 
 class AddStackTraceForPhpStormProcessorTest extends TestCase
 {

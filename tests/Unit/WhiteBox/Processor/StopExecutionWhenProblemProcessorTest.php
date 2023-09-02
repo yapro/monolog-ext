@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace YaPro\MonologExt\Tests\Unit\Processor;
+namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
 use Monolog\Logger;
-use YaPro\MonologExt\Processor\StopExecutionWhenProblemProcessor;
 use PHPUnit\Framework\TestCase;
+use YaPro\MonologExt\Processor\StopExecutionWhenProblemProcessor;
 
 /**
  * Тестирование \YaPro\MonologExt\Processor\StopExecutionWhenProblemProcessor
