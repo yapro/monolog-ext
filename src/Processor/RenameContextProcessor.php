@@ -20,7 +20,7 @@ class RenameContextProcessor
     {
         if (isset($record['context'])) {
             $record[$this->destinationFieldName] = $record['context'];
-            unset($record[$this->destinationFieldName]);
+            unset($record['context']);
         }
 
         return $record;
