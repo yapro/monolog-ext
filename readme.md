@@ -43,6 +43,12 @@ services:
     tags:
       - { name: monolog.processor, handler: main, priority: -1 }
 
+  # Moves the contents of the content field to the location specified in the record field + removes the context field
+  YaPro\MonologExt\Processor\MoveContextProcessor:
+    class: YaPro\MonologExt\Processor\MoveContextProcessor
+    tags:
+      - { name: monolog.processor, handler: main, priority: -1 }
+
   # Adds a request as curl command to a log record
   # Old version - https://github.com/yapro/monolog-ext/blob/php5/src/Monolog/Processor/RequestAsCurl.php
   monolog.processor.request_as_curl:
