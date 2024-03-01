@@ -90,7 +90,8 @@ class AddInformationAboutExceptionProcessor
         }
         $result = $this->varHelper->dumpException($exception);
         if ($this->isExtraDataExists($exception)) {
-            $result['extraData'] = $this->varHelper->dump($exception->getData());
+            $dump = trim($this->varHelper->dump($exception->getData()));
+            $result['extraData'] = $dump ?? 'unspecified or an empty string';
         }
         if ($exception = $exception->getPrevious()) {
             $result['previous'] = $this->handleException($exception, $maxDepthLevel, ++$level);
@@ -101,7 +102,7 @@ class AddInformationAboutExceptionProcessor
 
     public function isExtraDataExists($exception): bool
     {
-        if ($exception instanceof ExtraDataExceptionInterface && $exception->getData()) {
+        if ($exception instanceof ExtraDataExceptionInterface) {
             return true;
         }
         if (
