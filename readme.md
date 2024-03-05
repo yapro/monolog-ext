@@ -12,10 +12,34 @@ composer require yapro/monolog-ext dev-master
 
 Configuration Symfony >= 2.x
 ------------
+You can use the best way to handle your logs because it's the easiest way:
+```yaml
+monolog:
+    channels:
+        - deprecation # Deprecations are logged in the dedicated "deprecation" channel when it exists
+    handlers:
+        main:
+            type: service
+            id: YaPro\MonologExt\Handler\JsonToStdErrHandler
+```
+and don't forget to register the handler as a service:
+```yaml
+services:
+  YaPro\MonologExt\Handler\JsonToStdErrHandler: ~
+```
+You will get the features:
+- writing logs to stderr ( https://12factor.net/logs )
+- json representation
+- ignoring logs when the client sends an invalid http request (4xx)
+- log records of all levels in the application code (src dir, not in vendor dir)
+- log records of the NOTICE level and higher in libraries (vendor dir)
+- smart a record reducing (removing keys from the record context when the record size exceeds 8192 bytes)
 
-It is a collection of monolog processors, that gives you the opportunity to handle and log different errors.
+and other features such as development mode.
 
-Add needed for you services to your config.yml
+You can also use the collection of monolog processors, that gives you the opportunity to handle and log different errors.
+
+Add needed for you app to your config.yml
 
 ```yml
 services:

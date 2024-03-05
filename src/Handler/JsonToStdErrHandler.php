@@ -19,6 +19,10 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      * @var false|resource
      */
     private $stderr;
+    
+    // используется для игнорирования повтороного сообщения (такое бывает, когда приложение завершается с ошибкой, при
+    // этом set_exception_handler пишет ошибку, а потом register_shutdown_function пишет ее же (еще раз)
+    private string $lastMessageHash = '';
 
     public function __construct() {
         parent::__construct();
@@ -47,7 +51,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         ) {
             return false;
         }
-        // обрабатываем все записи в приложении
+        // обрабатываем лог-записи всех уровней в коде приложении (src dir)
         if ($record['channel'] === 'app') {
             return true;
         }
@@ -74,6 +78,12 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      */
     protected function write(array $record): void
     {
+        $message = $this->getMessage($record);
+        if (sha1($message) === $this->lastMessageHash) {
+            return;
+        }
+        $this->lastMessageHash = sha1($message);
+        // todo можно подумать над тем, чтобы сплитить запись на несколько при превышении длинны
         fwrite($this->stderr, $this->getMessage($record) . PHP_EOL);
     }
 
@@ -83,6 +93,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'dev') {
             return json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
         }
+        // здесь указаны массивах в которых будет выполнен поиск ключей с большим значением
+        // при нахождении ключей с большим значением, они по очереди удаляются, пока лог-запись не станет приемлемого размера
         foreach (['context', 'debugInfo'] as $key) {
             $result = $this->getReducedRecord($record, $key);
             if ($this->isMessageShort($result)) {
@@ -106,7 +118,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             return $result;
         }
         foreach ($record[$keyName] as $key => $value) {
-            $record[$keyName][$key] = 'deleted because this log record is too big';
+            $removedKey = array_key_last($record[$keyName]);
+            $record[$keyName][$removedKey] = 'deleted because this log record is too big';
             $result = $this->getJson($record);
             if ($this->isMessageShort($result)) {
                 return $result;
