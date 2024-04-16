@@ -1,6 +1,8 @@
 MonologExt
 ===============
-Very useful extensions for Monolog.
+The realy useful Monolog`s extensions.
+
+![lib tests](https://github.com/yapro/monolog-ext/actions/workflows/main.yml/badge.svg)
 
 Installation
 ------------

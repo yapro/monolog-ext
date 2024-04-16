@@ -15,6 +15,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
 {
     // PHP дробит строки данной длинны, а инфраструктура обрабатывающая запись теряет их: https://github.com/docker-library/php/pull/725#issuecomment-443540114
     public const MAX_RECORD_LENGTH = 8192;
+    const THE_LOG_ENTRY_IS_TOO_LONG = 'the log entry is too long';
+    const THE_LOG_ENTRY_IS_TOO_LONG_SO_IT_IS_REDUCED = self::THE_LOG_ENTRY_IS_TOO_LONG . ', so it is reduced: ';
     /**
      * @var false|resource
      */
@@ -93,16 +95,26 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'dev') {
             return json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
         }
+        $result = $this->getJson($record);
+        if ($this->isMessageShort($result)) {
+            return $result;
+        }
         // здесь указаны массивах в которых будет выполнен поиск ключей с большим значением
         // при нахождении ключей с большим значением, они по очереди удаляются, пока лог-запись не станет приемлемого размера
-        foreach (['context', 'debugInfo'] as $key) {
-            $result = $this->getReducedRecord($record, $key);
+        if (isset($record['context'])) {
+            $result = $this->getReducedRecord($record, 'context');
+            if ($this->isMessageShort($result)) {
+                return $result;
+            }
+        }
+        if (isset($record['debugInfo'])) {
+            $result = $this->getReducedRecord($record, 'debugInfo');
             if ($this->isMessageShort($result)) {
                 return $result;
             }
         }
         // попробуем сохранить хотя бы часть сообщения:
-        $record['message'] = mb_substr($record['message'], 0, self::MAX_RECORD_LENGTH - strlen('{"message":""}'));
+        $record['message'] = mb_substr($record['message'], 0, self::MAX_RECORD_LENGTH - mb_strlen('{"message":""}'));
         $record = ['message' => $record['message']];
 
         return $this->getJson($record);
@@ -110,28 +122,33 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
 
     public function getReducedRecord(array &$record, $keyName): string
     {
-        $result = $this->getJson($record);
-        if ($this->isMessageShort($result)) {
-            return $result;
-        }
-        if (!isset($record[$keyName])) {
-            return $result;
-        }
-        foreach ($record[$keyName] as $key => $value) {
-            $removedKey = array_key_last($record[$keyName]);
-            $record[$keyName][$removedKey] = 'deleted because this log record is too big';
+        $explanation = self::THE_LOG_ENTRY_IS_TOO_LONG_SO_IT_IS_REDUCED;
+        $explanationLength = mb_strlen($explanation);
+        $preserved = array_reverse($record[$keyName], true);
+        foreach ($preserved as $key => $value) {
             $result = $this->getJson($record);
             if ($this->isMessageShort($result)) {
                 return $result;
             }
+            // находим, на сколько символов нужно уменьшить $record (лишнее количество символов):
+            $excessCharactersInTheRecord = mb_strlen($result) - self::MAX_RECORD_LENGTH;
+            if ($excessCharactersInTheRecord > 0) {
+                // находим насколько мы должны подрезать value:
+                $newValueMaxLength = mb_strlen($value) - $excessCharactersInTheRecord - $explanationLength;
+                if ($newValueMaxLength > 0) {// даем пояснение + подрезаем value:
+                    $record[$keyName][$key] = $explanation . mb_substr($value, 0, $newValueMaxLength);
+                } else {// символов на подрезку не остается, увы удаляем value:
+                    $record[$keyName][$key] = self::THE_LOG_ENTRY_IS_TOO_LONG;
+                }
+            }
         }
 
-        return $result;
+        return $this->getJson($record);
     }
 
     public function isMessageShort(string $record): bool
     {
-        return strlen($record) < self::MAX_RECORD_LENGTH;
+        return mb_strlen($record) < self::MAX_RECORD_LENGTH;
     }
 
     public function getJson(array $record): string
