@@ -134,9 +134,10 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             $excessCharactersInTheRecord = mb_strlen($result) - self::MAX_RECORD_LENGTH;
             if ($excessCharactersInTheRecord > 0) {
                 // находим насколько мы должны подрезать value:
-                $newValueMaxLength = mb_strlen($value) - $excessCharactersInTheRecord - $explanationLength;
+                $valueAsString = $this->getJson($value);
+                $newValueMaxLength = mb_strlen($valueAsString) - $excessCharactersInTheRecord - $explanationLength;
                 if ($newValueMaxLength > 0) {// даем пояснение + подрезаем value:
-                    $record[$keyName][$key] = $explanation . mb_substr($value, 0, $newValueMaxLength);
+                    $record[$keyName][$key] = $explanation . mb_substr($valueAsString, 0, $newValueMaxLength);
                 } else {// символов на подрезку не остается, увы удаляем value:
                     $record[$keyName][$key] = self::THE_LOG_ENTRY_IS_TOO_LONG;
                 }
