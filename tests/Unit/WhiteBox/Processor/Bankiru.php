@@ -5,6 +5,9 @@ namespace Bankiru\LogContracts\Exception;
 use Exception;
 use Throwable;
 
+/**
+ * @deprecated use \YaPro\MonologExt\ExtraDataExceptionInterface instead
+ */
 interface ExtraDataExceptionInterface extends Throwable
 {
     /**
@@ -20,6 +23,9 @@ interface ExtraDataExceptionInterface extends Throwable
     public function setData($extraData);
 }
 
+/**
+ * @deprecated use \YaPro\MonologExt\ExtraDataException instead
+ */
 class ExtraDataException extends Exception implements ExtraDataExceptionInterface
 {
     /**
