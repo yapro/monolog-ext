@@ -8,6 +8,7 @@ use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use JsonException;
+use YaPro\MonologExt\VarHelper;
 use function is_numeric;
 
 // todo покрыть методы тестами
@@ -21,6 +22,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      * @var false|resource
      */
     private $stderr;
+    private VarHelper $varHelper;
     
     // используется для игнорирования повтороного сообщения (такое бывает, когда приложение завершается с ошибкой, при
     // этом set_exception_handler пишет ошибку, а потом register_shutdown_function пишет ее же (еще раз)
@@ -29,6 +31,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     public function __construct() {
         parent::__construct();
         $this->stderr = fopen('php://stderr', 'w');
+        $this->varHelper = new VarHelper();
     }
 
     // Не реализуем метод isHandling т.к. он уже реализован \Monolog\Handler\AbstractHandler::isHandling(), а главное
@@ -134,7 +137,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             $excessCharactersInTheRecord = mb_strlen($result) - self::MAX_RECORD_LENGTH;
             if ($excessCharactersInTheRecord > 0) {
                 // находим насколько мы должны подрезать value:
-                $valueAsString = is_string($value) ? $value : $this->getJson($value);
+                $valueAsString = $this->varHelper->dump($value);
                 $newValueMaxLength = mb_strlen($valueAsString) - $excessCharactersInTheRecord - $explanationLength;
                 if ($newValueMaxLength > 0) {// даем пояснение + подрезаем value:
                     $record[$keyName][$key] = $explanation . mb_substr($valueAsString, 0, $newValueMaxLength);
