@@ -102,7 +102,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if ($this->isMessageShort($result)) {
             return $result;
         }
-        // здесь указаны массивах в которых будет выполнен поиск ключей с большим значением
+        // здесь указаны ключи массива, в которых будет выполнен поиск ключей с большим значением
         // при нахождении ключей с большим значением, они по очереди удаляются, пока лог-запись не станет приемлемого размера
         if (isset($record['context'])) {
             $result = $this->getReducedRecord($record, 'context');
@@ -125,6 +125,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
 
     public function getReducedRecord(array &$record, $keyName): string
     {
+        $mysteriousCharacters = 2;
         $explanation = self::THE_LOG_ENTRY_IS_TOO_LONG_SO_IT_IS_REDUCED;
         $explanationLength = mb_strlen($explanation);
         $preserved = array_reverse($record[$keyName], true);
@@ -138,7 +139,11 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             if ($excessCharactersInTheRecord > 0) {
                 // находим насколько мы должны подрезать value:
                 $valueAsString = $this->varHelper->dump($value);
-                $newValueMaxLength = mb_strlen($valueAsString) - $excessCharactersInTheRecord - $explanationLength;
+                // почему-то функция dump добавляет к строкам двойные кавычки, пока не разобрался, поэтому:
+                if (is_string($value) && mb_substr($valueAsString, 0, 1) === '"' && mb_substr($value, 0, 1) !== '"') {
+                    $valueAsString = mb_substr($valueAsString, 1);
+                }
+                $newValueMaxLength = mb_strlen($valueAsString) - $excessCharactersInTheRecord - $explanationLength - $mysteriousCharacters;
                 if ($newValueMaxLength > 0) {// даем пояснение + подрезаем value:
                     $record[$keyName][$key] = $explanation . mb_substr($valueAsString, 0, $newValueMaxLength);
                 } else {// символов на подрезку не остается, увы удаляем value:
