@@ -96,7 +96,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     public function getMessage(array $record): string
     {
         if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'dev') {
-            return json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+            return json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
         }
         $result = $this->getJson($record);
         if ($this->isMessageShort($result)) {
@@ -162,6 +162,6 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
 
     public function getJson(array $record): string
     {
-        return json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        return json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
     }
 }
