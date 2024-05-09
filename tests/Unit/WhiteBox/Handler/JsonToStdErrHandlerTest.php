@@ -30,7 +30,7 @@ class JsonToStdErrHandlerTest extends TestCase
                 'thirs'  => 'string',
             ],
         ];
-        $explanationMessagesLength = 123;
+        $explanationMessagesLength = 195;
         $expected = [
             $keyName => [
                 'first' => 'string',
