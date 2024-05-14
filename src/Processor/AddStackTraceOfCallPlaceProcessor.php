@@ -13,9 +13,9 @@ class AddStackTraceOfCallPlaceProcessor
 {
     public function __invoke(array $record): array
     {
-        if (empty($record['context']['stack'])) {// try to find real trace:
+        if (empty($record['context']['stackTraceOfCallPlace'])) {// try to find real trace:
             $trace = (new Exception())->getTrace();
-            $record['context']['stack'] = $this->getStackTraceBeforeMonolog($trace);
+            $record['context']['stackTraceOfCallPlace'] = $this->getStackTraceBeforeMonolog($trace);
         }
 
         return $record;

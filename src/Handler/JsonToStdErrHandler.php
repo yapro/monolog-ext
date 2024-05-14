@@ -4,10 +4,12 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Handler;
 
+use Exception;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use JsonException;
+use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 use YaPro\MonologExt\VarHelper;
 use function is_numeric;
 
@@ -73,7 +75,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if (!$this->isSupporting($record)) {
             return false;
         }
-        $this->write($this->processRecord($record));
+        $record = $this->processRecord($record);
+        $this->write($record);
 
         return false;
     }
@@ -83,21 +86,43 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      */
     protected function write(array $record): void
     {
+        if (isset($_ENV['ERROR_HANDLER_DEV_MODE']) && $record['level'] > Logger::INFO) {
+
+            $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
+
+            $result .= $record['message'] . PHP_EOL;
+            unset($record['message']);
+            
+            $stackTraceOfCallPlaceProcessor = new AddStackTraceOfCallPlaceProcessor();
+            $trace = (new Exception())->getTrace();
+            $stackTraceBeforeMonolog = $stackTraceOfCallPlaceProcessor->getStackTraceBeforeMonolog($trace);
+            $callPlace = reset($stackTraceBeforeMonolog);
+            $result .= 'The log entry has been wrote by ' . ($callPlace['file'] ?? '') . ':' . ($callPlace['line'] ?? '')  . PHP_EOL;
+            
+            foreach ($record['context'] as $key => $value) {
+                $result .= trim($key .' : ' . $this->varHelper->dump($value)) . PHP_EOL;
+            }
+            unset($record['context']);
+            
+            foreach ($record as $key => $value) {
+                $result .= trim($key .' : ' . $this->varHelper->dump($value)) . PHP_EOL;
+            }
+            // $message .= json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+            fwrite($this->stderr, $result . PHP_EOL);
+            exit;
+        };
         $message = $this->getMessage($record);
         if (sha1($message) === $this->lastMessageHash) {
             return;
         }
         $this->lastMessageHash = sha1($message);
         // todo можно подумать над тем, чтобы сплитить запись на несколько при превышении длинны
-        fwrite($this->stderr, $this->getMessage($record) . PHP_EOL);
+        fwrite($this->stderr, $message . PHP_EOL);
     }
 
     // todo вынести в либу и актуализировать в других сервисах:
     public function getMessage(array $record): string
     {
-        if (isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'dev') {
-            return json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
-        }
         $result = $this->getJson($record);
         if ($this->isMessageShort($result)) {
             return $result;
