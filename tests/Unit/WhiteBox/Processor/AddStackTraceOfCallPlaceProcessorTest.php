@@ -43,7 +43,7 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
         $processor->method('getStackTraceBeforeMonolog')->willReturn($stackTraceBeforeMonolog);
 
         $record = $processor($record);
-        $this->assertEquals($expectedStack, $record['context']['stack']);
+        $this->assertEquals($expectedStack, $record['context']['stackTraceOfCallPlace']);
     }
 
     public function getStackTraceBeforeMonologProvider(): array
