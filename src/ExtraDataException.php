@@ -20,9 +20,9 @@ use Throwable;
  */
 class ExtraDataException extends Exception implements ExtraDataExceptionInterface
 {
-    private mixed $extraData = null;
+    private $extraData = null;
 
-    public function __construct(string $message = '', mixed $extraData = null, Throwable $previous = null, $code = 0)
+    public function __construct(string $message = '', $extraData = null, Throwable $previous = null, $code = 0)
     {
         // если понадобится использовать $code чаще чем $previous, то сделаем параметры mixed, а тут проверим и
         // поменяем местами переменные, чтобы правильно их передать в parent
@@ -30,12 +30,12 @@ class ExtraDataException extends Exception implements ExtraDataExceptionInterfac
         $this->extraData = $extraData;
     }
 
-    public function getData(): mixed
+    public function getData()
     {
         return $this->extraData;
     }
 
-    public function setData(mixed $extraData): self
+    public function setData($extraData): self
     {
         $this->extraData = $extraData;
 
