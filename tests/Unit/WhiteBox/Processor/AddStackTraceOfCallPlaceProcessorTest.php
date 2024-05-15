@@ -23,7 +23,7 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
             [
                 'record' => [
                     'context' => [
-                        'stack' => [4, 5, 6],
+                        'stackTraceOfCallPlace' => [4, 5, 6],
                     ],
                 ],
                 'stackTraceBeforeMonolog' => [1, 2, 3],
