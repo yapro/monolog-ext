@@ -157,6 +157,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             $result .= $this->getDebugInfo('', $record);
             // $message .= json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
             if (PHP_SAPI === 'fpm-fcgi') {
+                http_response_code(500);
                 echo '<pre>'.$result;
             } else {
                 $this->writeToStdErr($result);
