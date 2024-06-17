@@ -162,7 +162,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             } else {
                 $this->writeToStdErr($result);
             }
-            exit(123);
+            exit(122);
         };
         $result = $this->getMessage($record);
         if (sha1($result) === $this->lastRecordHash) {
@@ -170,6 +170,12 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         }
         $this->lastRecordHash = sha1($result);
         $this->writeToStdErr($result);
+        // По причине https://yapro.ru/article/16221 останавливаю обработку ошибок:
+        if (PHP_SAPI === 'fpm-fcgi' && isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'prod') {
+            http_response_code(500);
+            echo 'Sorry, an unexpected error has occurred.';
+            exit(123);
+        }
     }
 
     public function writeToStdErr(string $message)
