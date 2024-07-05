@@ -22,16 +22,23 @@ use function is_numeric;
 class JsonToStdErrHandler extends AbstractProcessingHandler
 {
     const THE_VALUE_IS_TOO_BIG = 'too big';
+
+    private VarHelper $varHelper;
+    private VarCloner $varCloner;
+    private CliDumper $varDumper;
+    
     /**
      * @var false|resource
      */
     private $stderr;
-    private VarHelper $varHelper;
     
     // используется для игнорирования повтороного сообщения (такое бывает, когда приложение завершается с ошибкой, при
     // этом set_exception_handler пишет ошибку, а потом register_shutdown_function пишет ее же (еще раз)
     private string $lastRecordHash = '';
+    
     private bool $devMode = false;
+    private int $ignoreRecordLevelBelow = 0;
+    private int $stopRequestWhenRecordLevelAbove = 0;
 
     public const MAX_DUMP_LEVEL_DEFAULT = 5;
     private int $maxDumpLevel = self::MAX_DUMP_LEVEL_DEFAULT;
@@ -51,15 +58,20 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     public const MAX_RECORD_LENGTH_DEFAULT = 16000;
     private int $maxRecordLength = self::MAX_RECORD_LENGTH_DEFAULT;
 
-    private VarCloner $varCloner;
-    private CliDumper $varDumper;
-
     public function __construct(int $maxRecordLength = 0) {
         parent::__construct();
         $this->stderr = fopen('php://stderr', 'w');
         $this->varHelper = new VarHelper();
         $this->devMode = isset($_ENV['ERROR_HANDLER_DEV_MODE']);
-        $this->maxDumpLevel = isset($_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL']) && (int) $_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'] ? (int) $_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'] : self::MAX_DUMP_LEVEL_DEFAULT;
+        if (isset($_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'])) {
+            $this->maxDumpLevel = (int) $_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'];
+        }
+        if (isset($_ENV['ERROR_HANDLER_IGNORE_RECORD_LEVEL_BELOW'])) {
+            $this->ignoreRecordLevelBelow = (int) $_ENV['ERROR_HANDLER_IGNORE_RECORD_LEVEL_BELOW'];
+        }
+        if (isset($_ENV['ERROR_HANDLER_STOP_REQUEST_WHEN_RECORD_LEVEL_ABOVE'])) {
+            $this->stopRequestWhenRecordLevelAbove = (int) $_ENV['ERROR_HANDLER_STOP_REQUEST_WHEN_RECORD_LEVEL_ABOVE'];
+        }
         if ($maxRecordLength) {
             $this->maxRecordLength = $maxRecordLength;
         } else {
@@ -88,17 +100,14 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if (!isset($record['level']) || !isset($record['channel'])) {
             return true;
         }
-        if (isset($_ENV['MONOLOG_EXT_JSON_TO_STD_ERR_HANDLER_LEVEL'])
-            && is_numeric($_ENV['MONOLOG_EXT_JSON_TO_STD_ERR_HANDLER_LEVEL'])
-            && $record['level'] < $_ENV['MONOLOG_EXT_JSON_TO_STD_ERR_HANDLER_LEVEL']
-        ) {
+        if ($record['level'] < $this->ignoreRecordLevelBelow) {
             return false;
         }
-        // обрабатываем лог-записи всех уровней в коде приложении (src dir)
+        // обрабатываем все лог-записи в коде приложения (в директории src)
         if ($record['channel'] === 'app') {
             return true;
         }
-        // обрабатываем все ошибки (в том числе в библиотеках)
+        // обрабатываем все ошибки (в том числе в библиотеках) если их уровень больше, чем INFO:
         if ($record['level'] > Logger::INFO) {
             return true;
         }
@@ -141,7 +150,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      */
     public function write(array $record): void
     {
-        if ($this->devMode && $record['level'] > Logger::INFO) {
+        if ($this->devMode) {
 
             $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
 
@@ -171,9 +180,9 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         $this->lastRecordHash = sha1($result);
         $this->writeToStdErr($result);
         // По причине https://yapro.ru/article/16221 останавливаю обработку ошибок:
-        if (PHP_SAPI === 'fpm-fcgi' && isset($_ENV['APP_ENV']) && $_ENV['APP_ENV'] === 'prod') {
+        if ($record['level'] > $this->stopRequestWhenRecordLevelAbove) {
             http_response_code(500);
-            echo 'Sorry, an unexpected error has occurred.';
+            echo 'Sorry, an unexpected error has occurred. The error has been logged.';
             exit(123);
         }
     }
