@@ -36,7 +36,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     // этом set_exception_handler пишет ошибку, а потом register_shutdown_function пишет ее же (еще раз)
     private string $lastRecordHash = '';
     
-    private bool $devMode = false;
+    private bool $devModePhpFpm = false;
+    private bool $devModePhpCli = false;
     private int $ignoreRecordLevelBelow = 0;
     private int $stopRequestWhenRecordLevelAbove = 0;
 
@@ -62,7 +63,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         parent::__construct();
         $this->stderr = fopen('php://stderr', 'w');
         $this->varHelper = new VarHelper();
-        $this->devMode = isset($_ENV['ERROR_HANDLER_DEV_MODE']);
+        $this->devModePhpFpm = isset($_ENV['ERROR_HANDLER_DEV_MODE_PHP_FPM']);
+        $this->devModePhpCli = isset($_ENV['ERROR_HANDLER_DEV_MODE_PHP_CLI']);
         if (isset($_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'])) {
             $this->maxDumpLevel = (int) $_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'];
         }
@@ -150,7 +152,16 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      */
     public function write(array $record): void
     {
-        if ($this->devMode) {
+        if ($this->devModePhpFpm || $this->devModePhpCli) {
+            if (PHP_SAPI === 'fpm-fcgi') {
+                if (!$this->devModePhpFpm) {
+                    return;
+                }
+            } else {
+                if (!$this->devModePhpCli) {
+                    return;
+                }
+            }
 
             $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
 
@@ -171,7 +182,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
             } else {
                 $this->writeToStdErr($result);
             }
-            exit(122);
+            exit(121);
         };
         $result = $this->getMessage($record);
         if (sha1($result) === $this->lastRecordHash) {
@@ -179,6 +190,11 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         }
         $this->lastRecordHash = sha1($result);
         $this->writeToStdErr($result);
+        if (!isset($record['level'])) {
+            http_response_code(500);
+            echo 'Sorry, an unexpected error has occurred. The log entry has no level. The error has been logged.';
+            exit(122);
+        }
         // По причине https://yapro.ru/article/16221 останавливаю обработку ошибок:
         if ($record['level'] > $this->stopRequestWhenRecordLevelAbove) {
             http_response_code(500);
