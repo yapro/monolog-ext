@@ -59,7 +59,7 @@ class StopExecutionWhenProblemProcessorTest extends TestCase
                 'expectedReturn' => true,   // ожидается завершение скрипта
             ],
             [
-                'record' => ['level' => Logger::INFO],
+                'record' => ['level' => 0],
                 'isDisableOnce' => false,
                 'expectedReturn' => false,
             ],

@@ -80,7 +80,7 @@ class JsonToStdErrHandlerTest extends TestCase
             ->setMethodsExcept(['write'])
             ->getMock();
         $mock->expects($this->exactly(1))->method('writeToStdErr');
-        $record = ['any', 'level' => Logger::INFO];
+        $record = ['any', 'level' => 0];
         $mock->write($record);
         $mock->write($record);
 
@@ -91,7 +91,7 @@ class JsonToStdErrHandlerTest extends TestCase
             ->getMock();
         $mock->expects($this->exactly(2))->method('writeToStdErr');
         $mock->method('getMessage')->willReturn('{"first":"message"}', '{"first":"message"}','{"second":"message"}');
-        $record = ['any', 'level' => Logger::INFO];
+        $record = ['any', 'level' => 0];
         $mock->write($record);
         $mock->write($record);
         $mock->write($record);
@@ -211,12 +211,12 @@ class JsonToStdErrHandlerTest extends TestCase
         ];
         yield [ // 9
             'value' => $object,
-            'expected' => '{#262   +"foo": {#261 …1}   +"bar": {#258 …1} }',
+            'expected' => '{#262   +"foo": {#261 …1}   +"bar": {#259 …1} }',
             'level' => 1,
         ];
         yield [
             'value' => $object,
-            'expected' => '{#262   +"foo": {#261     +"baz": {#260}   }   +"bar": {#258     +"baz": {#259}   } }',
+            'expected' => '{#262   +"foo": {#261     +"baz": {#260}   }   +"bar": {#259     +"baz": {#258}   } }',
             'level' => 2,
         ];
         $value = [
@@ -239,7 +239,7 @@ class JsonToStdErrHandlerTest extends TestCase
         ];
         yield [
             'value' => $value,
-            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [     "string"   ]   "first-6" => {#262     +"foo": {#261 …1}     +"bar": {#258 …1}   } ]',
+            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [     "string"   ]   "first-6" => {#262     +"foo": {#261 …1}     +"bar": {#259 …1}   } ]',
             'level' => 2,
         ];
         // тест на глубину - во что будут сериализованы многомерные массивы:
