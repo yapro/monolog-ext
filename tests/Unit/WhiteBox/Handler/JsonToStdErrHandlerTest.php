@@ -5,6 +5,7 @@ namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Handler;
 
 use Closure;
 use Generator;
+use Monolog\Logger;
 use PHPUnit\Framework\TestCase;
 use stdClass;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
@@ -79,7 +80,7 @@ class JsonToStdErrHandlerTest extends TestCase
             ->setMethodsExcept(['write'])
             ->getMock();
         $mock->expects($this->exactly(1))->method('writeToStdErr');
-        $record = ['any'];
+        $record = ['any', 'level' => Logger::INFO];
         $mock->write($record);
         $mock->write($record);
 
@@ -90,7 +91,7 @@ class JsonToStdErrHandlerTest extends TestCase
             ->getMock();
         $mock->expects($this->exactly(2))->method('writeToStdErr');
         $mock->method('getMessage')->willReturn('{"first":"message"}', '{"first":"message"}','{"second":"message"}');
-        $record = ['any'];
+        $record = ['any', 'level' => Logger::INFO];
         $mock->write($record);
         $mock->write($record);
         $mock->write($record);
