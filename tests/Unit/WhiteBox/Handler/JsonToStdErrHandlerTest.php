@@ -201,6 +201,7 @@ class JsonToStdErrHandlerTest extends TestCase
         $object = new stdClass();
         $object->foo = new stdClass();
         $object->foo->baz = new stdClass();
+        $object->bar = new stdClass();
         $object->bar->baz = new stdClass();
         yield [ // 8
             'value' => $object,
