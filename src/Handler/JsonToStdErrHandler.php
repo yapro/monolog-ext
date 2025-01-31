@@ -71,7 +71,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         if (isset($_ENV['EH_IGNORE_RECORD_LEVEL_BELOW'])) {
             $this->ignoreRecordLevelBelow = (int) $_ENV['EH_IGNORE_RECORD_LEVEL_BELOW'];
         }
-        if (isset($_ENV['EH_STOP_RECORD_LEVEL_ABOVE'])) {
+        if (isset($_ENV['EH_STOP_WHEN_RECORD_LEVEL_ABOVE'])) {
             $this->stopRequestWhenRecordLevelAbove = (int) $_ENV['EH_STOP_WHEN_RECORD_LEVEL_ABOVE'];
         }
         if ($maxRecordLength) {
