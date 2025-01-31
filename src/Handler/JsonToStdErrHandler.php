@@ -63,16 +63,16 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         parent::__construct();
         $this->stderr = fopen('php://stderr', 'w');
         $this->varHelper = new VarHelper();
-        $this->devModePhpFpm = isset($_ENV['ERROR_HANDLER_DEV_MODE_PHP_FPM']);
-        $this->devModePhpCli = isset($_ENV['ERROR_HANDLER_DEV_MODE_PHP_CLI']);
-        if (isset($_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'])) {
-            $this->maxDumpLevel = (int) $_ENV['ERROR_HANDLER_MAX_DUMP_LEVEL'];
+        $this->devModePhpFpm = !empty($_ENV['EH_DEV_MODE_PHP_FPM']);
+        $this->devModePhpCli = !empty($_ENV['EH_DEV_MODE_PHP_CLI']);
+        if (isset($_ENV['EH_MAX_DUMP_LEVEL'])) {
+            $this->maxDumpLevel = (int) $_ENV['EH_MAX_DUMP_LEVEL'];
         }
-        if (isset($_ENV['ERROR_HANDLER_IGNORE_RECORD_LEVEL_BELOW'])) {
-            $this->ignoreRecordLevelBelow = (int) $_ENV['ERROR_HANDLER_IGNORE_RECORD_LEVEL_BELOW'];
+        if (isset($_ENV['EH_IGNORE_RECORD_LEVEL_BELOW'])) {
+            $this->ignoreRecordLevelBelow = (int) $_ENV['EH_IGNORE_RECORD_LEVEL_BELOW'];
         }
-        if (isset($_ENV['ERROR_HANDLER_STOP_REQUEST_WHEN_RECORD_LEVEL_ABOVE'])) {
-            $this->stopRequestWhenRecordLevelAbove = (int) $_ENV['ERROR_HANDLER_STOP_REQUEST_WHEN_RECORD_LEVEL_ABOVE'];
+        if (isset($_ENV['EH_STOP_RECORD_LEVEL_ABOVE'])) {
+            $this->stopRequestWhenRecordLevelAbove = (int) $_ENV['EH_STOP_WHEN_RECORD_LEVEL_ABOVE'];
         }
         if ($maxRecordLength) {
             $this->maxRecordLength = $maxRecordLength;
