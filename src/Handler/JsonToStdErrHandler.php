@@ -39,7 +39,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     private bool $devModePhpFpm = false;
     private bool $devModePhpCli = false;
     private int $ignoreRecordLevelBelow = 0;
-    private int $stopRequestWhenRecordLevelAbove = 0;
+    private int $stopRequestWhenRecordLevelAbove = Logger::CRITICAL;
 
     public const MAX_DUMP_LEVEL_DEFAULT = 5;
     private int $maxDumpLevel = self::MAX_DUMP_LEVEL_DEFAULT;
@@ -147,43 +147,39 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         return $result;
     }
 
+    public function getDevFormattedMessage(array $record): string
+    {
+        $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
+
+        $result .= $record['message'] . PHP_EOL;
+        unset($record['message']);
+
+        $stackTraceOfCallPlaceProcessor = new AddStackTraceOfCallPlaceProcessor();
+        $trace = (new Exception())->getTrace();
+        $stackTraceBeforeMonolog = $stackTraceOfCallPlaceProcessor->getStackTraceBeforeMonolog($trace);
+        $callPlace = reset($stackTraceBeforeMonolog);
+        $result .= 'The log entry has been wrote by ' . ($callPlace['file'] ?? '') . ':' . ($callPlace['line'] ?? '') . PHP_EOL;
+
+        $result .= $this->getDebugInfo('', $record);
+        // $message .= json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+
+        return $result;
+    }
+
     /**
      * @throws JsonException
      */
     public function write(array $record): void
     {
-        if ($this->devModePhpFpm || $this->devModePhpCli) {
-            if (PHP_SAPI === 'fpm-fcgi') {
-                if (!$this->devModePhpFpm) {
-                    return;
-                }
-            } else {
-                if (!$this->devModePhpCli) {
-                    return;
-                }
-            }
-
-            $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
-
-            $result .= $record['message'] . PHP_EOL;
-            unset($record['message']);
-
-            $stackTraceOfCallPlaceProcessor = new AddStackTraceOfCallPlaceProcessor();
-            $trace = (new Exception())->getTrace();
-            $stackTraceBeforeMonolog = $stackTraceOfCallPlaceProcessor->getStackTraceBeforeMonolog($trace);
-            $callPlace = reset($stackTraceBeforeMonolog);
-            $result .= 'The log entry has been wrote by ' . ($callPlace['file'] ?? '') . ':' . ($callPlace['line'] ?? '')  . PHP_EOL;
-
-            $result .= $this->getDebugInfo('', $record);
-            // $message .= json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
-            if (PHP_SAPI === 'fpm-fcgi') {
-                http_response_code(500);
-                echo '<pre>'.$result;
-            } else {
-                $this->writeToStdErr($result);
-            }
+        if ($this->devModePhpFpm && PHP_SAPI === 'fpm-fcgi') {
+            http_response_code(500);
+            echo '<pre>' . $this->getDevFormattedMessage($record);
+            exit(120);
+        }
+        if ($this->devModePhpCli && PHP_SAPI !== 'fpm-fcgi') {
+            $this->writeToStdErr($this->getDevFormattedMessage($record));
             exit(121);
-        };
+        }
         $result = $this->getMessage($record);
         if (sha1($result) === $this->lastRecordHash) {
             return;

@@ -41,13 +41,13 @@ and other features such as development mode.
 
 You can also configure JsonToStdErrHandler:
 
-| env var name                                       | default value | example | description                                                                                             |
-|----------------------------------------------------|---------------|---------|---------------------------------------------------------------------------------------------------------|
-| EH_DEV_MODE_PHP_FPM                     | 0             | 1       | print out important debugging information and stop the execution (comfortable development in php-fpm)   |
-| EH_DEV_MODE_PHP_CLI                     | 0             | 1       | print out important debugging information and stop the execution (comfortable development in php-cli)   |
-| EH_MAX_DUMP_LEVEL                       | 5             | 3       | the nesting level of the objects to be serialized (3 is less detailed level than 5)                     |
-| EH_IGNORE_RECORD_LEVEL_BELOW            | 0             | 250     | errors with a level below the specified one will be ignored (250 is less then NOTICE, 0 == all records) |
-| EH_STOP_WHEN_RECORD_LEVEL_ABOVE | 0             | 200     | an error with a level higher than the specified one will stop the http request with the 500 status      |
+| env var name                                       | default value | example | description                                                                                                           |
+|----------------------------------------------------|---------------|---------|-----------------------------------------------------------------------------------------------------------------------|
+| EH_DEV_MODE_PHP_FPM                     | 0             | 1       | print out important debugging information and stop the execution (comfortable development in php-fpm)                 |
+| EH_DEV_MODE_PHP_CLI                     | 0             | 1       | print out important debugging information and stop the execution (comfortable development in php-cli)                 |
+| EH_MAX_DUMP_LEVEL                       | 5             | 3       | the nesting level of the objects to be serialized (3 is less detailed level than 5)                                   |
+| EH_IGNORE_RECORD_LEVEL_BELOW            | 0             | 250     | errors with a level below the specified one will be ignored (250 is less then NOTICE, 0 == all records)               |
+| EH_STOP_WHEN_RECORD_LEVEL_ABOVE | 500           | 400     | an error with a level higher than the specified one will stop the http request with the 500 status (Logger::CRITICAL) |
 
 You can also use the collection of monolog processors, that gives you the opportunity to handle and log different errors.
 
