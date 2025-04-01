@@ -130,7 +130,7 @@ class JsonToStdErrHandlerTest extends TestCase
         yield [
             'record' => $record,
             'maxRecordLength' => 175,
-            'expected' => '{"first-1":{"second-1":"string","second-2":{"third-1":"string","third-2":"[ …1]"}},"first-2":{"second-3":"string","second-4":{"third-3":"12345","third-4":"true","third-5":"{#366 …2}"},"second-5":"string"}}',
+            'expected' => '{"first-1":{"second-1":"string","second-2":{"third-1":"string","third-2":"[ …1]"}},"first-2":{"second-3":"string","second-4":{"third-3":"12345","third-4":"true","third-5":"{#274 …2}"},"second-5":"string"}}',
         ];
     }
 
@@ -206,17 +206,17 @@ class JsonToStdErrHandlerTest extends TestCase
         $object->bar->baz = new stdClass();
         yield [ // 8
             'value' => $object,
-            'expected' => '{#354 …2}',
+            'expected' => '{#262 …2}',
             'level' => 0,
         ];
         yield [ // 9
             'value' => $object,
-            'expected' => '{#354   +"foo": {#353 …1}   +"bar": {#351 …1} }',
+            'expected' => '{#262   +"foo": {#261 …1}   +"bar": {#259 …1} }',
             'level' => 1,
         ];
         yield [
             'value' => $object,
-            'expected' => '{#354   +"foo": {#353     +"baz": {#352}   }   +"bar": {#351     +"baz": {#350}   } }',
+            'expected' => '{#262   +"foo": {#261     +"baz": {#260}   }   +"bar": {#259     +"baz": {#258}   } }',
             'level' => 2,
         ];
         $value = [
@@ -234,12 +234,12 @@ class JsonToStdErrHandlerTest extends TestCase
         ];
         yield [
             'value' => $value,
-            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [ …1]   "first-6" => {#354 …2} ]',
+            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [ …1]   "first-6" => {#262 …2} ]',
             'level' => 1,
         ];
         yield [
             'value' => $value,
-            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [     "string"   ]   "first-6" => {#354     +"foo": {#353 …1}     +"bar": {#351 …1}   } ]',
+            'expected' => '[   "first-1" => "string"   "first-2" => 12345   "first-3" => 1.2345   "first-4" => true   "first-5" => [     "string"   ]   "first-6" => {#262     +"foo": {#261 …1}     +"bar": {#259 …1}   } ]',
             'level' => 2,
         ];
         // тест на глубину - во что будут сериализованы многомерные массивы:
