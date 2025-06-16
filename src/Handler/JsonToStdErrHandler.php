@@ -18,7 +18,6 @@ use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 use YaPro\MonologExt\VarHelper;
 use function is_numeric;
 
-// todo покрыть методы тестами
 class JsonToStdErrHandler extends AbstractProcessingHandler
 {
     const THE_VALUE_IS_TOO_BIG = 'too big';
@@ -45,7 +44,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     private int $maxDumpLevel = self::MAX_DUMP_LEVEL_DEFAULT;
     /**
      * Проблема масштабная:
-     *  1. PHP дробит строк длинной больше чем значение log_limit https://www.php.net/manual/en/install.fpm.configuration.php#log-limit
+     *  1. PHP дробит строки длинной больше чем значение log_limit https://www.php.net/manual/en/install.fpm.configuration.php#log-limit
      *  2. Docker дробит строки длинной больше 16 Кб https://github.com/moby/moby/issues/34855
      *  3. Инфраструктура обрабатывающая разбитые записи теряет их
      * Решение: перед записью в stderr проверять длинну сообщения на значение maxRecordLength
@@ -171,12 +170,13 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
      */
     public function write(array $record): void
     {
-        if ($this->devModePhpFpm && PHP_SAPI === 'fpm-fcgi') {
+        $isHttp = PHP_SAPI === 'fpm-fcgi';
+        if ($this->devModePhpFpm && $isHttp) {
             http_response_code(500);
             echo '<pre>' . $this->getDevFormattedMessage($record);
             exit(120);
         }
-        if ($this->devModePhpCli && PHP_SAPI !== 'fpm-fcgi') {
+        if ($this->devModePhpCli && !$isHttp) {
             $this->writeToStdErr($this->getDevFormattedMessage($record));
             exit(121);
         }
@@ -187,13 +187,13 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         $this->lastRecordHash = sha1($result);
         $this->writeToStdErr($result);
         if (!isset($record['level'])) {
-            http_response_code(500);
+            $isHttp && http_response_code(500);
             echo 'Sorry, an unexpected error has occurred. The log entry has no level. The error has been logged.';
             exit(122);
         }
         // По причине https://yapro.ru/article/16221 останавливаю обработку ошибок:
         if ($record['level'] > $this->stopRequestWhenRecordLevelAbove) {
-            http_response_code(500);
+            $isHttp && http_response_code(500);
             echo 'Sorry, an unexpected error has occurred. The error has been logged.';
             exit(123);
         }
@@ -223,7 +223,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     }
 
     // возвращает $record, которая на уровне $maxLevel имеет строковые значения (задампленные значения)
-    public function dumpRecordDataOnTheLevel(array $record, $maxLevel, $currentLevel = 1)
+    public function dumpRecordDataOnTheLevel(iterable $record, $maxLevel, $currentLevel = 1)
     {
         foreach ($record as $key => $value) {
             if ($currentLevel === $maxLevel) {
@@ -238,7 +238,7 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         return $record;
     }
 
-    public function reduceRecordDataOnTheLevel(array &$record, $maxLevel, $currentLevel = 1)
+    public function reduceRecordDataOnTheLevel(iterable &$record, $maxLevel, $currentLevel = 1)
     {
         if ($currentLevel === $maxLevel) {
             $reversed = array_reverse($record, true);
