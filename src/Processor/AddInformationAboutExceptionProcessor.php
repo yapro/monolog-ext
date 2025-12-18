@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Processor;
 
 use Monolog\Logger;
+use Monolog\LogRecord;
+use Monolog\Processor\ProcessorInterface;
 use YaPro\MonologExt\ExtraDataExceptionInterface;
 use YaPro\MonologExt\VarHelper;
 use Throwable;
@@ -23,7 +25,7 @@ use Throwable;
  *      throw $e;
  * }.
  */
-class AddInformationAboutExceptionProcessor
+class AddInformationAboutExceptionProcessor implements ProcessorInterface
 {
     /**
      * @cont - ключ флага отключения процессора
@@ -50,18 +52,17 @@ class AddInformationAboutExceptionProcessor
      */
     public function __construct(string $logLevel = 'DEBUG', int $maxDepthLevel = 100500)
     {
-        $this->logLevel = Logger::toMonologLevel($logLevel);
+        $this->logLevel = Logger::toMonologLevel($logLevel)->value;
         $this->maxDepthLevel = $maxDepthLevel;
         // использование статических методов Не приветствуется PHPMD, используем "инстанс"
         $this->varHelper = new VarHelper();
         $this->isBankiExtraDataExceptionInterfaceExists = interface_exists(self::BANKI_EXTRA_DATA_EXCEPTION_INTERFACE);
     }
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         // НЕ достигнут минимальный уровень логирования
-        $weakLevel = array_key_exists('level', $record) && $record['level'] < $this->logLevel;
-        if ($weakLevel === true) {
+        if ($record->level < $this->logLevel) {
             return $record;
         }
 

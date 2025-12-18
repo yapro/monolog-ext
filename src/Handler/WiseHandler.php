@@ -7,18 +7,17 @@ namespace YaPro\MonologExt\Handler;
 use Exception;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
-use Symfony\Component\HttpKernel\Exception\HttpException;
+use Monolog\LogRecord;
 use JsonException;
 use Symfony\Component\VarDumper\Cloner\VarCloner;
 use Symfony\Component\VarDumper\Dumper\AbstractDumper;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use Symfony\Component\VarDumper\Dumper\ContextualizedDumper;
-use Throwable;
 use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 use YaPro\MonologExt\VarHelper;
-use function is_numeric;
 
-class JsonToStdErrHandler extends AbstractProcessingHandler
+// В прод-режиме пишет логи в stderr в json-формате
+class WiseHandler extends AbstractProcessingHandler
 {
     const THE_VALUE_IS_TOO_BIG = 'too big';
 
@@ -92,7 +91,8 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     {
         // игнорируем http ошибки клиента (4xx):
         if (isset($record['context']['exception']) &&
-            $record['context']['exception'] instanceof HttpException &&
+            class_exists('\Symfony\Component\HttpKernel\Exception\HttpException') &&
+            $record['context']['exception'] instanceof \Symfony\Component\HttpKernel\Exception\HttpException &&
             $record['context']['exception']->getStatusCode() < 500
         ) {
             return false;
@@ -116,9 +116,9 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
         return false;
     }
 
-    public function handle(array $record): bool
+    public function handle(LogRecord $record): bool
     {
-        if (!$this->isSupporting($record)) {
+        if (!$this->isSupporting($record->toArray())) {
             return false;
         }
         $record = $this->processRecord($record);
@@ -168,8 +168,9 @@ class JsonToStdErrHandler extends AbstractProcessingHandler
     /**
      * @throws JsonException
      */
-    public function write(array $record): void
+    public function write(LogRecord $record): void
     {
+        $record = $record->toArray();
         $isHttp = PHP_SAPI === 'fpm-fcgi';
         if ($this->devModePhpFpm && $isHttp) {
             http_response_code(500);

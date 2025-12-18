@@ -22,12 +22,12 @@ monolog:
     handlers:
         main:
             type: service
-            id: YaPro\MonologExt\Handler\JsonToStdErrHandler
+            id: YaPro\MonologExt\Handler\WiseHandler
 ```
 and don't forget to register the handler as a service:
 ```yaml
 services:
-  YaPro\MonologExt\Handler\JsonToStdErrHandler: ~
+  YaPro\MonologExt\Handler\WiseHandler: ~
 ```
 You will get the features:
 - writing logs to stderr ( https://12factor.net/logs )
@@ -39,7 +39,7 @@ You will get the features:
 
 and other features such as development mode.
 
-You can also configure JsonToStdErrHandler:
+You can also configure WiseHandler:
 
 | env var name                              | default value | example | description                                                                                                           |
 |-------------------------------------------|---------------|---------|-----------------------------------------------------------------------------------------------------------------------|
@@ -161,79 +161,31 @@ services:
             - { name: monolog.processor, handler: main }
 ```
 
-Configuration for projects without Symfony framework.
+## The configuration without Symfony framework.
 ------------
 
-[Monolog Cascade](https://github.com/theorchard/monolog-cascade) extension gives you the opportunity to 
-handle and log errors of different levels.
-
-### Usage
-
-Just use your logger as shown below
+Here is a configuration sample:
 ```php
-Cascade::fileConfig($config);
-Log::info('Well, that works!');
-Log::error('Maybe not...', ['some'=>'extra data']);
+<?php
+
+use Monolog\Logger;
+use YaPro\MonologExt\Handler\WiseHandler;
+
+$logger = new Logger('app');
+$logger->pushHandler(new WiseHandler());
+
+$logger->error('Payment error', ['order_id' => 42]);
 ```
 
-### Configuring your loggers
-
-Monolog Cascade supports the following config formats:
-- Yaml
-- JSON
-- Php array
-
-### Configuration structure
-
-Here is a sample Php array config file:
+If you want to handle errors:
 
 ```php
 <?php
 
-$config = [
-    'formatters' => [
-        'dashed' => [
-            //'class' => 'Monolog\Formatter\LineFormatter',
-            'class' => \Monolog\Formatter\JsonFormatter::class
-            //'format' => '%datetime%-%channel%.%level_name% - %message%'
-        ]
-    ],
-    'handlers' => [
-        'console' => [
-            'class' => 'Monolog\Handler\StreamHandler',
-            'level' => 'DEBUG',
-            'formatter' => 'dashed',
-            'stream' => 'php://stdout'
-        ],
-        'info_file_handler' => [
-            'class' => 'Monolog\Handler\StreamHandler',
-            'level' => 'INFO',
-            'formatter' => 'dashed',
-            'stream' => './example_info.log'
-        ]
-    ],
-    'processors' => [
-        'web_processor' => [
-            'class' => 'Monolog\Processor\WebProcessor'
-        ]
-    ],
-    'loggers' => [
-        'mainLogger' => [
-            'handlers' => [
-                0 => 'console',
-                1 => 'info_file_handler'
-            ],
-            'processors' => [
-                0 => 'web_processor'
-            ]
-        ]
-    ],
-    'disable_existing_loggers' => true,
-    'errorReporting' => E_ALL & ~E_DEPRECATED & ~E_STRICT,
-];
-```
+use YaPro\MonologExt\PrudentErrorHandler;
 
-More detailed information about the configurations - https://github.com/theorchard/monolog-cascade
+new PrudentErrorHandler($logger);
+```
 
 Tests
 ------------

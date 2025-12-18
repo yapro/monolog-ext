@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
 use Bankiru\LogContracts\Exception\ExtraDataException;
+use DateTimeImmutable;
 use Exception;
 use Generator;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use Throwable;
 use YaPro\Helper\LiberatorTrait;
@@ -76,9 +79,12 @@ class AddInformationAboutExceptionProcessorTest extends TestCase
             ->setMethodsExcept(['__invoke'])
             ->getMock();
         $processor->method('handleException')->willReturnArgument(0);
-
-        $result = $processor($record);
-        $this->assertEquals($expected, $result);
+        $logRecord = new LogRecord(new DateTimeImmutable(), 'channel', Level::fromValue($record['level']), 'any message', $record['context']);
+        $result = $processor($logRecord);
+        $this->assertEquals($expected, [
+            'level' => $result->level->value,
+            'context' => $result->context,
+        ]);
     }
 
     public function handleExceptionProvider(): array

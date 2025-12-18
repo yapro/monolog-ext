@@ -4,16 +4,20 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Handler;
 
 use Closure;
+use DateTimeImmutable;
 use Generator;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LogLevel;
 use stdClass;
 use Symfony\Component\VarDumper\Dumper\CliDumper;
 use YaPro\Helper\LiberatorTrait;
-use YaPro\MonologExt\Handler\JsonToStdErrHandler;
+use YaPro\MonologExt\Handler\WiseHandler;
 use YaPro\MonologExt\VarHelper;
 
-class JsonToStdErrHandlerTest extends TestCase
+class WiseHandlerTest extends TestCase
 {
     use LiberatorTrait;
 
@@ -65,7 +69,7 @@ class JsonToStdErrHandlerTest extends TestCase
      */
     public function testFindMaxDumpLevel(array $record, int $maxRecordLength, int $expectedMaxDumpLevel): void
     {
-        $rat = new JsonToStdErrHandler();
+        $rat = new WiseHandler();
         $this->setClassPropertyValue($rat, 'maxRecordLength', $maxRecordLength);
 
         $result = $rat->findMaxDumpLevel($record);
@@ -75,26 +79,30 @@ class JsonToStdErrHandlerTest extends TestCase
     public function testWrite(): void
     {
         // проверка дубля записи (когда хендлер ошибок пишет ошикбу + хендрел шатдауна ее дублирует)
-        $mock = $this->getMockBuilder(JsonToStdErrHandler::class)
+        $mock = $this->getMockBuilder(WiseHandler::class)
             ->disableOriginalConstructor()
             ->setMethodsExcept(['write'])
             ->getMock();
         $mock->expects($this->exactly(1))->method('writeToStdErr');
-        $record = ['any', 'level' => 0];
+        $record = new LogRecord(new DateTimeImmutable(), 'channel', Level::fromName(LogLevel::INFO), 'message');
         $mock->write($record);
         $mock->write($record);
 
         // проверка: после дубля сообщения нормально пишутся
-        $mock = $this->getMockBuilder(JsonToStdErrHandler::class)
+        $mock = $this->getMockBuilder(WiseHandler::class)
             ->disableOriginalConstructor()
             ->setMethodsExcept(['write'])
             ->getMock();
         $mock->expects($this->exactly(2))->method('writeToStdErr');
-        $mock->method('getMessage')->willReturn('{"first":"message"}', '{"first":"message"}','{"second":"message"}');
-        $record = ['any', 'level' => 0];
-        $mock->write($record);
-        $mock->write($record);
-        $mock->write($record);
+        // За счет повторения 2х сообщений и должно получится 2 вызова writeToStdErr, а не 3:
+        $mock->method('getMessage')->willReturn(
+            'LogRecord 1',
+            'LogRecord 1', // этот не будет писаться в writeToStdErr
+            'LogRecord 2'
+        );
+        $mock->write(new LogRecord(new DateTimeImmutable(), 'channel', Level::fromName(LogLevel::INFO), 'any message'));
+        $mock->write(new LogRecord(new DateTimeImmutable(), 'channel', Level::fromName(LogLevel::INFO), 'any message'));
+        $mock->write(new LogRecord(new DateTimeImmutable(), 'channel', Level::fromName(LogLevel::INFO), 'any message'));
     }
 
     public function providerGetMessage(): Generator
@@ -139,7 +147,7 @@ class JsonToStdErrHandlerTest extends TestCase
      */
     public function testGetMessage(array $record, int $maxRecordLength, string $expected): void
     {
-        $rat = new JsonToStdErrHandler();
+        $rat = new WiseHandler();
         $this->setClassPropertyValue($rat, 'maxRecordLength', $maxRecordLength);
         $result = $rat->getMessage($record);
         //$this->assertSame($expected, $result);
@@ -278,14 +286,14 @@ class JsonToStdErrHandlerTest extends TestCase
      */
     public function testTheDump($value, string $expected, int $level = 0): void
     {
-        $rat = new JsonToStdErrHandler();
+        $rat = new WiseHandler();
         $result = $rat->dump($value, $level);
         $this->assertSame($expected, $result);
     }
 
     public function testDumpRecordDataOnTheLevel(): void
     {
-        $rat = new JsonToStdErrHandler();
+        $rat = new WiseHandler();
 
         $record = [
                 'first-1' => [
@@ -343,11 +351,11 @@ class JsonToStdErrHandlerTest extends TestCase
             'first-2' => [
                 'second-3' => str_repeat('ю', 100),
                 'second-4' => str_repeat('ю', 100),
-                'second-5' => JsonToStdErrHandler::THE_VALUE_IS_TOO_BIG,
+                'second-5' => WiseHandler::THE_VALUE_IS_TOO_BIG,
             ],
         ];
 
-        $rat = new JsonToStdErrHandler();
+        $rat = new WiseHandler();
         $this->setClassPropertyValue($rat, 'maxRecordLength', 400);
         $maxLevel = 2; // мы знаем, что значения на этом уровене делают $record слишком большим для записи, поэтому будем уменьшать значения ключей на нем
 
