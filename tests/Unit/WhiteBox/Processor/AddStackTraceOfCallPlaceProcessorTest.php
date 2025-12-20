@@ -35,7 +35,7 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
     /**
      * @dataProvider invokeProvider
      */
-    public function WIP_testInvoke(array $record, array $stackTraceBeforeMonolog, array $expectedStack)
+    public function testInvoke(array $record, array $stackTraceBeforeMonolog, array $expectedStack)
     {
         $processor = $this->getMockBuilder(AddStackTraceOfCallPlaceProcessor::class)
             ->setMethodsExcept(['disableOnce', '__invoke'])
@@ -93,7 +93,7 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
     /**
      * @dataProvider getStackTraceBeforeMonologProvider
      */
-    public function WIP_testGetStackTraceBeforeMonolog(array $recordArg, array $expected)
+    public function testGetStackTraceBeforeMonolog(array $recordArg, array $expected)
     {
         $processor = new AddStackTraceOfCallPlaceProcessor();
         $this->assertEquals($expected, $processor->getStackTraceBeforeMonolog($recordArg));

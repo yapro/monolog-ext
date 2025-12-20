@@ -47,7 +47,7 @@ class AddStackTraceForPhpStormProcessorTest extends TestCase
     /**
      * @dataProvider invokeProvider
      */
-    public function WIP_testInvoke(array $record, array $expected)
+    public function testInvoke(array $record, array $expected)
     {
         $processor = $this->getMockBuilder(AddStackTraceForPhpStormProcessor::class)
             ->setMethodsExcept(['__invoke'])
@@ -94,7 +94,7 @@ class AddStackTraceForPhpStormProcessorTest extends TestCase
     /**
      * @dataProvider getFrameToStringProvider
      */
-    public function WIP_testGetFrameToString(array $input, string $expectedReturn): void
+    public function testGetFrameToString(array $input, string $expectedReturn): void
     {
         $processor = new AddStackTraceForPhpStormProcessor();
 
@@ -144,7 +144,7 @@ class AddStackTraceForPhpStormProcessorTest extends TestCase
     /**
      * @dataProvider getArgsToStringProvider
      */
-    public function WIP_testGetArgsToString(array $input, ?string $expectedReturn)
+    public function testGetArgsToString(array $input, ?string $expectedReturn)
     {
         $processor = new AddStackTraceForPhpStormProcessor();
 
