@@ -6,8 +6,10 @@ namespace YaPro\MonologExt\Processor;
 
 use Exception;
 use Monolog\Logger;
+use Monolog\LogRecord;
+use Monolog\Processor\ProcessorInterface;
 
-class StopExecutionWhenProblemProcessor
+class StopExecutionWhenProblemProcessor implements ProcessorInterface
 {
     private static bool $disableOnce = false;
 
@@ -19,11 +21,11 @@ class StopExecutionWhenProblemProcessor
     	$this->stream = fopen('php://stderr', 'w'); 
     }    	
 
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
-        if ($this->isProcess($record)) {
+        if ($this->isProcess($record->toArray())) {
             self::$disableOnce = false;
-            $this->handler($record);
+            $this->handler($record->toArray());
         }
 
         return $record;

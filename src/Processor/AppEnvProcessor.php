@@ -2,6 +2,7 @@
 
 namespace YaPro\MonologExt\Processor;
 
+use Monolog\LogRecord;
 use Monolog\Processor\ProcessorInterface;
 
 class AppEnvProcessor implements ProcessorInterface
@@ -9,7 +10,7 @@ class AppEnvProcessor implements ProcessorInterface
     /**
      * {@inheritDoc}
      */
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         $record['extra']['env'] = $_ENV['APP_ENV'] ?? '-';
 

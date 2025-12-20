@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Processor;
 
+use Monolog\LogRecord;
+use Monolog\Processor\ProcessorInterface;
+
 /**
  * Процессор получает строковое представление стека вызовов ['context']['stack'] пригодное для PhpStorm
  */
-class AddStackTraceForPhpStormProcessor
+class AddStackTraceForPhpStormProcessor implements ProcessorInterface
 {
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         if (
             // Let`s get a stack trace as string like it doing \Symfony\Component\Debug\ErrorHandler::handleException

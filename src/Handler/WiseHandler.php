@@ -9,31 +9,20 @@ use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Logger;
 use Monolog\LogRecord;
 use JsonException;
-use Symfony\Component\VarDumper\Cloner\VarCloner;
-use Symfony\Component\VarDumper\Dumper\AbstractDumper;
-use Symfony\Component\VarDumper\Dumper\CliDumper;
-use Symfony\Component\VarDumper\Dumper\ContextualizedDumper;
 use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
-use YaPro\MonologExt\VarHelper;
 
 // В прод-режиме пишет логи в stderr в json-формате
 class WiseHandler extends AbstractProcessingHandler
 {
-    const THE_VALUE_IS_TOO_BIG = 'too big';
-
-    private VarHelper $varHelper;
-    private VarCloner $varCloner;
-    private CliDumper $varDumper;
-    
     /**
      * @var false|resource
      */
     private $stderr;
-    
+
     // используется для игнорирования повтороного сообщения (такое бывает, когда приложение завершается с ошибкой, при
     // этом set_exception_handler пишет ошибку, а потом register_shutdown_function пишет ее же (еще раз)
     private string $lastRecordHash = '';
-    
+
     private bool $devModePhpFpm = false;
     private bool $devModePhpCli = false;
     private int $ignoreRecordLevelBelow = 0;
@@ -60,7 +49,6 @@ class WiseHandler extends AbstractProcessingHandler
     public function __construct(int $maxRecordLength = 0) {
         parent::__construct();
         $this->stderr = fopen('php://stderr', 'w');
-        $this->varHelper = new VarHelper();
         $this->devModePhpFpm = !empty($_ENV['EH_DEV_MODE_PHP_FPM']);
         $this->devModePhpCli = !empty($_ENV['EH_DEV_MODE_PHP_CLI']);
         if (isset($_ENV['EH_MAX_DUMP_LEVEL'])) {
@@ -80,8 +68,6 @@ class WiseHandler extends AbstractProcessingHandler
                 $this->maxRecordLength = $limit;
             }
         }
-        $this->varCloner = new VarCloner();
-        $this->varDumper = new CliDumper(null, null, AbstractDumper::DUMP_LIGHT_ARRAY);
     }
 
     // Не реализуем метод isHandling т.к. он уже реализован \Monolog\Handler\AbstractHandler::isHandling(), а главное
@@ -92,7 +78,7 @@ class WiseHandler extends AbstractProcessingHandler
         // игнорируем http ошибки клиента (4xx):
         if (isset($record['context']['exception']) &&
             class_exists('\Symfony\Component\HttpKernel\Exception\HttpException') &&
-            $record['context']['exception'] instanceof \Symfony\Component\HttpKernel\Exception\HttpException &&
+            is_a($record['context']['exception'], '\Symfony\Component\HttpKernel\Exception\HttpException') &&
             $record['context']['exception']->getStatusCode() < 500
         ) {
             return false;
@@ -127,25 +113,6 @@ class WiseHandler extends AbstractProcessingHandler
         return false;
     }
 
-    public function getDebugInfo(string $prefix, $objectOrArray, int $level = 0): string
-    {
-        // сначала печатаем примитивные типы до уровня 3, а затем все остальные в виде дампов:
-        if ($level === 3) {
-            return $prefix.' : ' .$this->dump($objectOrArray, 1) . PHP_EOL;
-        }
-        $result = '';
-        is_array($objectOrArray) && asort($objectOrArray);
-        foreach ($objectOrArray as $key => $value) {
-            $fieldName = $prefix === '' ? $key : $prefix.'.'. $key;
-            if (is_scalar($value) || is_null($value)) {
-                $result .= trim($fieldName .' : ' . $value) . PHP_EOL;
-            } else {
-                $result .= $this->getDebugInfo($fieldName, $value, $level + 1);
-            }
-        }
-        return $result;
-    }
-
     public function getDevFormattedMessage(array $record): string
     {
         $result = PHP_EOL . ':::::::::::::::::::: ' . __CLASS__ . ' informs ::::::::::::::::::' . PHP_EOL . PHP_EOL;
@@ -159,8 +126,7 @@ class WiseHandler extends AbstractProcessingHandler
         $callPlace = reset($stackTraceBeforeMonolog);
         $result .= 'The log entry has been wrote by ' . ($callPlace['file'] ?? '') . ':' . ($callPlace['line'] ?? '') . PHP_EOL;
 
-        $result .= $this->getDebugInfo('', $record);
-        // $message .= json_encode($this->varHelper->dump($record), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
+        $result .= $this->getJson($this->dumpToScalarArray($record, $this->maxDumpLevel));
 
         return $result;
     }
@@ -206,174 +172,92 @@ class WiseHandler extends AbstractProcessingHandler
         fwrite($this->stderr, $message . PHP_EOL);
     }
 
-
-    public function reduceRecord(array $record, $maxLevel, $currentLevel = 0)
-    {
-        $currentLevel++;
-        foreach ($record as $key => $value) {
-            if ($currentLevel === $maxLevel) {
-                $value = self::THE_VALUE_IS_TOO_BIG; // The maximum dump level has been reached.
-            }
-            if (is_iterable($value)) {
-                $record[$key] = $this->reduceRecord($value, $maxLevel, $currentLevel);
-            } else {
-                $record[$key] = $value;
-            }
-        }
-        return $record;
-    }
-
-    // возвращает $record, которая на уровне $maxLevel имеет строковые значения (задампленные значения)
-    public function dumpRecordDataOnTheLevel(iterable $record, $maxLevel, $currentLevel = 1)
-    {
-        foreach ($record as $key => $value) {
-            if ($currentLevel === $maxLevel) {
-                $value = $this->dump($value);
-            }
-            if (is_iterable($value)) {
-                $record[$key] = $this->dumpRecordDataOnTheLevel($value, $maxLevel, $currentLevel+1);
-            } else {
-                $record[$key] = $value;
-            }
-        }
-        return $record;
-    }
-
-    public function reduceRecordDataOnTheLevel(iterable &$record, $maxLevel, $currentLevel = 1)
-    {
-        if ($currentLevel === $maxLevel) {
-            $reversed = array_reverse($record, true);
-            foreach ($reversed as $key => $value) {
-                $record[$key] = self::THE_VALUE_IS_TOO_BIG;
-                $changeableRecordAsJson = $this->getJson($record);
-                if ($this->isRecordShort($changeableRecordAsJson)) {
-                    return $record;
-                }
-            }
-        } else {
-            foreach ($record as $key => $value) {
-                if (is_iterable($value)) {
-                    $record[$key] = $this->reduceRecordDataOnTheLevel($value, $maxLevel, $currentLevel++);
-                } else {
-                    $record[$key] = $value;
-                }
-            }
-        }
-        return $record;
-    }
-
-    // Находим $maxDumpLevel требуемый для безопасного сохранения сообщения в stderr
-    public function findMaxDumpLevel(array $record): int
-    {
-        for ($maxDumpLevel = $this->maxDumpLevel; $maxDumpLevel > 0; $maxDumpLevel--) {
-            $string = $this->dump($record, $maxDumpLevel);
-            if ($this->isRecordShort($string)) {
-                break;
-            }
-        }
-        return $maxDumpLevel;
-    }
-
     public function getMessage(array $record): string
     {
-        $maxDumpLevel = $this->findMaxDumpLevel($record);
-        // В данной строке мы знаем приемлемый уровень для создания строки log-записи с учетом $this->maxRecordLength, но
-        // попробуем не укорачивать глобально по уровню, а попробуем укоротить уменьшая даннные на уровне $maxDumpLevel+1
-        // Для этого сначала задампим данные на уровне $maxDumpLevel+1, а потом будем отбрасывать значения
-        $dumpedRecord = $this->dumpRecordDataOnTheLevel($record, $maxDumpLevel+1);
-        $this->reduceRecordDataOnTheLevel($dumpedRecord, $maxDumpLevel+1, 1);
-
-        return $this->getJson($dumpedRecord);
-/*
-        $result = $this->getJson($record);
-        if ($this->isMessageShort($result)) {
-            return $result;
-        }
-        // здесь указаны ключи массива, в которых будет выполнен поиск ключей с большим значением
-        // при нахождении ключей с большим значением, они по очереди удаляются, пока лог-запись не станет приемлемого размера
-        if (isset($record['context'])) {
-            $result = $this->getReducedRecord($record, 'context');
-            return $result;
-        }
-        // если вдруг админы решили не индексировать поле context, то просто можно начать вместо него использовать поле debugInfo:
-        if (isset($record['debugInfo'])) {
-            $result = $this->getReducedRecord($record, 'debugInfo');
-            if ($this->isMessageShort($result)) {
-                return $result;
+        for ($maxDumpLevel = $this->maxDumpLevel; $maxDumpLevel > 0; $maxDumpLevel--) {
+            $dump = $this->dumpToScalarArray($record, $maxDumpLevel);
+            $json = $this->getJson($dump);
+            $isRecordShort = strlen($json) < $this->maxRecordLength;
+            if ($isRecordShort) {
+                return $json;
             }
         }
-        // попробуем сохранить хотя бы часть сообщения:
-        $record['message'] = mb_substr($record['message'], 0, $this->maxRecordLength - mb_strlen('{"message":""}'));
-        $record = ['message' => $record['message']];
-
-        return $this->getJson($record);
-        */
-    }
-
-    /**
-     * @param $value
-     * @param int $maxLevel - уровень, на котором скалярные значения остаются как есть, а другие типы превращаются в строку, например массив с двумя элементами превращается в "[ …2]"
-     * @return string
-     */
-    public function dump($value, int $maxLevel = 0): string
-    {
-        if (is_null($value)) {
-            return 'null';
-        }
-        if (is_bool($value)) {
-            return $value ? 'true' : 'false';
-        }
-        if (is_scalar($value)) {
-            return (string) $value;
-        }
-        //return $this->varCloner->cloneVar($value)->dump(new CliDumper());
-        //return (new CliDumper())->dump($serializebleClone, true);
-        // return print_r($serializebleClone, true); // var_export
-        $serializebleClone = $this->varCloner->cloneVar($value);
-        $data = $serializebleClone->withMaxDepth($maxLevel);
-        return trim(str_replace(PHP_EOL, ' ', $this->varDumper->dump($data, true)));
-    }
-
-    public function isRecordShort(string $record): bool
-    {
-        return mb_strlen($record) < $this->maxRecordLength;
+        return '{"message": "the record is too big"}';
     }
 
     public function getJson(array $record): string
     {
         return json_encode($record, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE | JSON_PRESERVE_ZERO_FRACTION | JSON_THROW_ON_ERROR);
     }
-/*
-    public function getReducedRecord(array &$changeableRecord, array &$changeableRecordValue): string
-    {
-        $mysteriousCharacters = 2;
-        $explanation = self::THE_LOG_ENTRY_IS_TOO_LONG_SO_IT_IS_REDUCED;
-        $explanationLength = mb_strlen($explanation);
-        $reversed = array_reverse($record, true);
-        foreach ($reversed as $key => $value) {
-            $result = $this->dump($value);
-            $result = $this->getJson($record);
-            if ($this->isMessageShort($result)) {
-                return $result;
-            }
-            // находим, на сколько символов нужно уменьшить $record (лишнее количество символов):
-            $excessCharactersInTheRecord = mb_strlen($result) - $this->maxRecordLength;
-            if ($excessCharactersInTheRecord > 0) {
-                // находим насколько мы должны подрезать value:
-                $valueAsString = $this->varHelper->dump($value);
-                // почему-то функция dump добавляет к строкам двойные кавычки, пока не разобрался, поэтому:
-                if (is_string($value) && mb_substr($valueAsString, 0, 1) === '"' && mb_substr($value, 0, 1) !== '"') {
-                    $valueAsString = mb_substr($valueAsString, 1);
-                }
-                $newValueMaxLength = mb_strlen($valueAsString) - $excessCharactersInTheRecord - $explanationLength - $mysteriousCharacters;
-                if ($newValueMaxLength > 0) {// даем пояснение + подрезаем value:
-                    $record[$key] = $explanation . mb_substr($valueAsString, 0, $newValueMaxLength);
-                } else {// символов на подрезку не остается, увы удаляем value:
-                    $record[$key] = self::THE_LOG_ENTRY_IS_TOO_LONG;
-                }
-            }
+    public function dumpToScalarArray(
+        mixed $value,
+        int $maxDepth = 10,
+        int $depth = 0,
+        array &$refs = []
+    ): mixed {
+        if ($depth > $maxDepth) {
+            return '**MAX_DEPTH**';
         }
 
-        return $this->getJson($record);
-    }*/
+        if ($value === null || is_scalar($value)) {
+            return $value;
+        }
+
+        if (is_array($value)) {
+            $result = [];
+            foreach ($value as $k => $v) {
+                $result[$this->normalizeKey($k)] =
+                    $this->dumpToScalarArray($v, $maxDepth, $depth + 1, $refs);
+            }
+            return $result;
+        }
+
+        if (is_object($value)) {
+            $id = spl_object_id($value);
+
+            if (isset($refs[$id])) {
+                return '**RECURSION(' . get_class($value) . ')**';
+            }
+
+            $refs[$id] = true;
+
+            $data = [
+                '__type'  => 'object',
+                '__class' => get_class($value),
+            ];
+
+            foreach ((array) $value as $key => $val) {
+                $key = $this->normalizeObjectKey($key);
+                $data[$key] =
+                    $this->dumpToScalarArray($val, $maxDepth, $depth + 1, $refs);
+            }
+
+            return $data;
+        }
+
+        if (is_resource($value)) {
+            return '**RESOURCE(' . get_resource_type($value) . ')**';
+        }
+
+        if (is_callable($value)) {
+            return '**CALLABLE**';
+        }
+
+        return '**UNKNOWN**';
+    }
+
+    public function normalizeKey(mixed $key): string|int
+    {
+        return is_int($key) ? $key : (string) $key;
+    }
+
+    public function normalizeObjectKey(string $key): string
+    {
+        if (str_contains($key, "\0")) {
+            $parts = explode("\0", $key);
+            return end($parts);
+        }
+
+        return $key;
+    }
 }

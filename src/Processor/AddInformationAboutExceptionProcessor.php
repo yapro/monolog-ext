@@ -42,10 +42,6 @@ class AddInformationAboutExceptionProcessor implements ProcessorInterface
     private int $maxDepthLevel;
     private VarHelper $varHelper;
 
-    // Banki.ru supporting
-    public const BANKI_EXTRA_DATA_EXCEPTION_INTERFACE = '\Bankiru\LogContracts\Exception\ExtraDataExceptionInterface';
-    private bool $isBankiExtraDataExceptionInterfaceExists;
-
     /**
      * @param string $logLevel - уровень log-records, которые будут залогированы
      * @param int $maxDepthLevel - максимальный уровень вложенности исключений при экспорте
@@ -56,7 +52,6 @@ class AddInformationAboutExceptionProcessor implements ProcessorInterface
         $this->maxDepthLevel = $maxDepthLevel;
         // использование статических методов Не приветствуется PHPMD, используем "инстанс"
         $this->varHelper = new VarHelper();
-        $this->isBankiExtraDataExceptionInterfaceExists = interface_exists(self::BANKI_EXTRA_DATA_EXCEPTION_INTERFACE);
     }
 
     public function __invoke(LogRecord $record): LogRecord
@@ -103,13 +98,6 @@ class AddInformationAboutExceptionProcessor implements ProcessorInterface
     public function isExtraDataExists($exception): bool
     {
         if ($exception instanceof ExtraDataExceptionInterface) {
-            return true;
-        }
-        if (
-            $this->isBankiExtraDataExceptionInterfaceExists &&
-            is_a($exception, self::BANKI_EXTRA_DATA_EXCEPTION_INTERFACE) &&
-            $exception->getData()
-        ) {
             return true;
         }
 

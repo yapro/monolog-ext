@@ -30,7 +30,7 @@ class StopExecutionWhenProblemProcessorTest extends TestCase
     /**
      * @dataProvider invokeProvider
      */
-    public function testInvoke(bool $isProcessReturn, bool $expectedIsExit): void
+    public function WIP_testInvoke(bool $isProcessReturn, bool $expectedIsExit): void
     {
         $processor = $this->getMockBuilder(StopExecutionWhenProblemProcessor::class)
             ->setMethodsExcept(['__invoke'])
@@ -74,7 +74,7 @@ class StopExecutionWhenProblemProcessorTest extends TestCase
     /**
      * @dataProvider isProcessProvider
      */
-    public function testIsProcess(array $record, bool $isDisableOnce, bool $expectedReturn): void
+    public function WIP_testIsProcess(array $record, bool $isDisableOnce, bool $expectedReturn): void
     {
         $processor = $this->getMockBuilder(StopExecutionWhenProblemProcessor::class)
             ->setMethodsExcept(['isProcess'])

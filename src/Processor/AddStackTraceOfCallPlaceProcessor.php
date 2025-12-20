@@ -5,13 +5,15 @@ declare(strict_types=1);
 namespace YaPro\MonologExt\Processor;
 
 use Exception;
+use Monolog\LogRecord;
+use Monolog\Processor\ProcessorInterface;
 
 /**
  * Добавляет стектрейс места возникновения log-record (помогает понять в каком месте контекста произошла проблема).
  */
-class AddStackTraceOfCallPlaceProcessor
+class AddStackTraceOfCallPlaceProcessor implements ProcessorInterface
 {
-    public function __invoke(array $record): array
+    public function __invoke(LogRecord $record): LogRecord
     {
         if (empty($record['context']['stackTraceOfCallPlace'])) {// try to find real trace:
             $trace = (new Exception())->getTrace();

@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
-use Bankiru\LogContracts\Exception\ExtraDataException;
 use DateTimeImmutable;
 use Exception;
 use Generator;
@@ -182,8 +181,6 @@ class AddInformationAboutExceptionProcessorTest extends TestCase
     {
         yield ['exception' => new Exception('foo'), 'expected' => false];
         yield ['exception' => (new ExtraException('foo'))->setData('bar'), 'expected' => true];
-        require_once __DIR__ . '/Bankiru.php';
-        yield ['exception' => (new ExtraDataException('foo'))->setData('bar'), 'expected' => true];
     }
 
     /**
