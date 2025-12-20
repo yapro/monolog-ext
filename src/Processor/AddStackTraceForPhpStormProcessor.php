@@ -22,8 +22,12 @@ class AddStackTraceForPhpStormProcessor implements ProcessorInterface
             // it can be deleted if you use symfony/monolog-bundle:
             // https://github.com/symfony/symfony/pull/17168
             // https://github.com/symfony/monolog-bundle/pull/153
-            $record['extra']['trace'] = $this->getStackTraceForPhpStorm($record['context']['stack']);
-            unset($record['context']['stack']);
+            $context = $record['context'];
+            $record['extra']['trace'] = $this->getStackTraceForPhpStorm($context['stack']);
+            // It's not supported anymore: unset($record['context']['stack']);
+            // And this too - see \Monolog\LogRecord::offsetSet:
+            // unset($context['stack']);
+            // $record['context'] = $context;
         }
 
         return $record;

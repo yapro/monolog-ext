@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
+use DateTimeImmutable;
+use Monolog\Level;
 use Monolog\Logger;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use YaPro\MonologExt\Processor\StopExecutionWhenProblemProcessor;
 
@@ -40,14 +43,16 @@ class StopExecutionWhenProblemProcessorTest extends TestCase
         // Устанавливаем возврат из условий кейса
         $processor->method('isProcess')->willReturn($isProcessReturn);
 
+        $logRecord = new LogRecord(new DateTimeImmutable(), 'channel', Level::Debug, 'any message');
+
         if ($expectedIsExit) {
             $processor->expects($this->once())->method('handler');
-            $processor([]);
+            $processor($logRecord);
 
             return;
         }
         $processor->expects($this->never())->method('handler');
-        $processor([]);
+        $processor($logRecord);
     }
 
     public function isProcessProvider(): array

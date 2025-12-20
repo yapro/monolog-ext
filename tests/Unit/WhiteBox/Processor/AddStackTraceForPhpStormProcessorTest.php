@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
+use DateTimeImmutable;
 use Exception;
+use Monolog\Level;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use YaPro\MonologExt\Processor\AddStackTraceForPhpStormProcessor;
@@ -21,7 +24,7 @@ class AddStackTraceForPhpStormProcessorTest extends TestCase
                     'context' => ['stack' => ['bar']],
                 ],
                 'expected' => [
-                    'context' => [],
+                    'context' => ['stack' => ['bar']],
                     'extra' => ['trace' => self::EXAMPLE_STACK_TRACE_STRING],
                 ],
             ],
@@ -47,14 +50,25 @@ class AddStackTraceForPhpStormProcessorTest extends TestCase
     /**
      * @dataProvider invokeProvider
      */
-    public function testInvoke(array $record, array $expected)
+    public function testInvoke(array $record, array $expectedData): void
     {
         $processor = $this->getMockBuilder(AddStackTraceForPhpStormProcessor::class)
             ->setMethodsExcept(['__invoke'])
             ->getMock();
         $processor->method('getStackTraceForPhpStorm')->willReturn(self::EXAMPLE_STACK_TRACE_STRING);
 
-        $this->assertEquals($expected, $processor($record));
+        $record = new LogRecord(new DateTimeImmutable(), 'channel', Level::Debug, 'any message', $record['context']);
+        $expected = new LogRecord(new DateTimeImmutable(), 'channel', Level::Debug, 'any message', $expectedData['context'], $expectedData['extra'] ?? []);
+
+        $result = $processor($record);
+
+        $resultAsArray = $result->toArray();
+        $expectedAsArray = $expected->toArray();
+
+        unset($resultAsArray['datetime']);
+        unset($expectedAsArray['datetime']);
+
+        $this->assertEquals($expectedAsArray, $resultAsArray);
     }
 
     public function getFrameToStringProvider(): array

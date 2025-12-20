@@ -15,9 +15,9 @@ class AddStackTraceOfCallPlaceProcessor implements ProcessorInterface
 {
     public function __invoke(LogRecord $record): LogRecord
     {
-        if (empty($record['context']['stackTraceOfCallPlace'])) {// try to find real trace:
+        if (empty($record['extra']['stackTraceOfCallPlace'])) {// try to find real trace:
             $trace = (new Exception())->getTrace();
-            $record['context']['stackTraceOfCallPlace'] = $this->getStackTraceBeforeMonolog($trace);
+            $record['extra']['stackTraceOfCallPlace'] = $this->getStackTraceBeforeMonolog($trace);
         }
 
         return $record;

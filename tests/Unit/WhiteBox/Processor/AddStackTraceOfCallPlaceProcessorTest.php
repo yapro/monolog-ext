@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace YaPro\MonologExt\Tests\Unit\WhiteBox\Processor;
 
+use DateTimeImmutable;
+use Monolog\Level;
+use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 use YaPro\MonologExt\Processor\AddStackTraceOfCallPlaceProcessor;
 
@@ -12,17 +15,19 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
     public function invokeProvider(): array
     {
         return [
+            // В этом случае в extra должен добавиться stackTraceOfCallPlace
             [
                 'record' => [
-                    'context' => [
+                    'extra' => [
                     ],
                 ],
                 'stackTraceBeforeMonolog' => [1, 2, 3],
                 'expectedStack' => [1, 2, 3],
             ],
+            // Если уже установлен stackTraceOfCallPlace, то AddStackTraceOfCallPlaceProcessor ничего не должен сделать:
             [
                 'record' => [
-                    'context' => [
+                    'extra' => [
                         'stackTraceOfCallPlace' => [4, 5, 6],
                     ],
                 ],
@@ -41,9 +46,9 @@ class AddStackTraceOfCallPlaceProcessorTest extends TestCase
             ->setMethodsExcept(['disableOnce', '__invoke'])
             ->getMock();
         $processor->method('getStackTraceBeforeMonolog')->willReturn($stackTraceBeforeMonolog);
-
-        $record = $processor($record);
-        $this->assertEquals($expectedStack, $record['context']['stackTraceOfCallPlace']);
+        $record = new LogRecord(new DateTimeImmutable(), 'channel', Level::Debug, 'any message', [], $record['extra']);
+        $result = $processor($record);
+        $this->assertEquals($expectedStack, $result->toArray()['extra']['stackTraceOfCallPlace']);
     }
 
     public function getStackTraceBeforeMonologProvider(): array
